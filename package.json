@@ -7,6 +7,6 @@
     "build": "npm run build:frontend"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   }
 }
