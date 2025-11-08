@@ -1,50 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
-// Recursive NavItem for mobile menu
-const NavItem = ({ item, depth = 0, closeMenu }) => {
-  const [open, setOpen] = useState(false);
-
-  const indent = depth * 8; // px indentation for nested items
-
-  if (item.children) {
-    return (
-      <div className="w-full">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-          className="w-full text-left px-4 py-2 text-gray-700 hover:text-red-600 hover:bg-red-100/40 rounded-md transition-colors duration-200 flex justify-between items-center"
-          style={{ paddingLeft: `${16 + indent}px` }}
-        >
-          <span>{item.label}</span>
-          <span className="text-sm text-gray-500">{open ? "-" : "+"}</span>
-        </button>
-        {open && (
-          <div className="">
-            {item.children.map((child, i) => (
-              <NavItem key={i} item={child} depth={depth + 1} closeMenu={closeMenu} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Leaf node: navigate and close menu
-  return (
-    <div className="w-full">
-      <NavLink
-        to={item.path}
-        className="block px-4 py-2 text-gray-700 hover:text-red-600 hover:bg-red-100/40 rounded-md transition-colors duration-200"
-        onClick={() => closeMenu && closeMenu()}
-      >
-        {item.label}
-      </NavLink>
-    </div>
-  );
-};
-
 const Topbar = () => {
   const location = useLocation();
   // detect if any path segment is a numeric table id (e.g. /5 or /5/order)
@@ -52,12 +8,6 @@ const Topbar = () => {
   const numericIndex = pathSegments.findIndex((s) => !isNaN(s));
   const hasTableInPath = numericIndex !== -1;
   const tableId = hasTableInPath ? pathSegments[numericIndex] : null;
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // Menu items should not include the table info — render table info separately
-  const menuItems = [
-    // remove admin panel from customer topbar
-  ];
 
   const handleRequestBill = () => {
     // For now show a confirmation — backend integration can be added later.
@@ -87,14 +37,6 @@ const Topbar = () => {
         {/* Desktop menu */}
         <div className="hidden md:flex items-center space-x-6 text-base">
           {hasTableInPath && (
-            <NavLink
-              to="/"
-              className="text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200 text-sm"
-            >
-              เปลี่ยนโต๊ะ
-            </NavLink>
-          )}
-          {hasTableInPath && (
             <button
               type="button"
               onClick={handleRequestBill}
@@ -103,66 +45,12 @@ const Topbar = () => {
               เรียกเช็คบิล
             </button>
           )}
-          {menuItems.map((item, idx) => (
-            <div key={idx} className="relative group">
-              <NavLink
-                to={item.path}
-                className="text-gray-700 hover:text-red-600 hover:bg-red-100/30 px-3 py-2 rounded-md transition-colors duration-200"
-              >
-                {item.label}
-              </NavLink>
-            </div>
-          ))}
         </div>
 
-  {/* Hamburger (mobile) - only show when a table is present */}
-  {hasTableInPath && (
-          <div className="md:hidden">
-            <button
-              aria-label="Toggle menu"
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded text-gray-700 hover:text-red-600"
-            >
-              {menuOpen ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              )}
-            </button>
-          </div>
-        )}
+        {/* Mobile menu removed: no hamburger shown */}
       </div>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 shadow-sm">
-          <div className="pt-2 pb-4">
-            {/* Show table info at top of mobile menu (separate from links) */}
-              {showTableNumber && (
-                <div className="px-4 py-2 border-b border-gray-100 flex flex-col items-center space-y-2">
-                  <NavLink
-                    to="/"
-                    onClick={() => setMenuOpen(false)}
-                    className="inline-block text-sm text-red-600 hover:bg-red-100/30 px-3 py-1 rounded"
-                  >
-                    เปลี่ยนโต๊ะ
-                  </NavLink>
-                  <button
-                    type="button"
-                    onClick={handleRequestBill}
-                    className="inline-block text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                  >
-                    เรียกเช็คบิล
-                  </button>
-                </div>
-              )}
-
-            {menuItems.map((item, i) => (
-              <NavItem key={i} item={item} closeMenu={() => setMenuOpen(false)} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* mobile menu removed */}
     </nav>
   );
 };
