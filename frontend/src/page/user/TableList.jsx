@@ -22,7 +22,8 @@ function TableList() {
     e.preventDefault();
     // Mock validation - using "1234" as password for all tables
     if (password === "1234") {
-      navigate(`/${selectedTable}`);
+      // After successful table selection, go directly to the order page for that table
+      navigate(`/${selectedTable}/order`);
     } else {
       setError("รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสในใบเสร็จ");
     }

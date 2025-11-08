@@ -6,6 +6,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 // User Pages
 import TableList from "@/page/user/TableList";
 import OrderPage from "@/page/user/OrderPage";
+import HistoryPage from "@/page/user/HistoryPage";
 
 // Admin Pages
 import MenuManagement from "@/page/admin/menu";
@@ -31,7 +32,10 @@ function App() {
         {/* User Routes */}
         <Route path="/" element={<UserLayout />}>
           <Route index element={<TableList />} />
+          {/* Support both /:tableId and /:tableId/order for compatibility */}
           <Route path=":tableId" element={<OrderPage />} />
+          <Route path=":tableId/order" element={<OrderPage />} />
+          <Route path=":tableId/history" element={<HistoryPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
