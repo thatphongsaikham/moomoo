@@ -1,22 +1,33 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./page/home/home";
-import Order from "./page/order/orderManagement";
-import Table from "./page/table/tableManagement";
-import Billing from "./page/Bill/billing";
+import UserLayout from "@/components/layout/UserLayout";
+import AdminLayout from "@/components/layout/AdminLayout";
 
-import Topbar from "./components/layout/sidebar/topbar";
+// User Pages
+import TableList from "@/page/user/TableList";
+import OrderPage from "@/page/user/OrderPage";
 
+// Admin Pages
+import HomeAdmin from "@/page/admin/homeAdmin";
+import AdminTable from "@/page/admin/table";
+import AdminBilling from "@/page/admin/billing";
 
 function App() {
   return (
     <BrowserRouter>
-      <Topbar /> 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/order" element={<Order />} />
-        <Route path="/table" element={<Table />} />
-        <Route path="/bill" element={<Billing />} />
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<HomeAdmin />} />
+          <Route path="table" element={<AdminTable />} />
+          <Route path="billing" element={<AdminBilling />} />
+        </Route>
+
+        {/* User Routes */}
+        <Route path="/" element={<UserLayout />}>
+          <Route index element={<TableList />} />
+          <Route path=":tableId" element={<OrderPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
