@@ -40,7 +40,7 @@ const Topbar = () => {
 
 
   return (
-    <nav className="bg-white shadow-md w-full z-50">
+    <nav className="bg-black shadow-md w-full z-70 h-16">
       <div className="container mx-auto flex items-center justify-between px-3 py-2 md:px-4 md:py-3">
         <NavLink to="/" className="text-lg sm:text-xl md:text-2xl font-bold text-red-600 tracking-tight">
           MooMoo

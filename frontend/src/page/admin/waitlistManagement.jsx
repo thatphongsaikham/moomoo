@@ -32,40 +32,39 @@ function WaitlistManagement() {
   };
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 font-sarabun">
       <h1 className="text-2xl font-bold mb-6">จัดการคิวรอ</h1>
 
-      {/* Add Customer Form */}
       <form onSubmit={handleAddCustomer} className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">ชื่อลูกค้า</label>
+            <label className="block text-sm text-gray-700">ชื่อลูกค้า</label>
             <input
               type="text"
               value={newCustomer.name}
-              onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+              onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+              className="mt-1 block w-[300px] h-8 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">จำนวนคน</label>
+            <label className="block text-sm text-gray-700">จำนวนคน</label>
             <input
               type="number"
               value={newCustomer.size}
-              onChange={(e) => setNewCustomer({...newCustomer, size: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+              onChange={(e) => setNewCustomer({ ...newCustomer, size: e.target.value })}
+              className="mt-1 block w-[300px] h-8 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
               required
               min="1"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">เบอร์โทร</label>
+            <label className="block text-sm text-gray-700">เบอร์โทร</label>
             <input
               type="tel"
               value={newCustomer.phone}
-              onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+              onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+              className="mt-1 block w-[300px] h-8 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
               placeholder="Optional"
             />
           </div>
@@ -78,53 +77,43 @@ function WaitlistManagement() {
         </button>
       </form>
 
-      {/* Waitlist */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      {/* ตารางคิวรอ */}
+      <div className="bg-white rounded-[16px] shadow-[0_-4px_12px_rgba(0,0,0,0.1),0_4px_12px_rgba(0,0,0,0.1)] overflow-hidden">
+        <table className="min-w-full border-collapse w-full">
+          <thead className="bg-[#990000]">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-white text-[20px] tracking-wider text-center">
                 ลำดับ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-white text-[20px] tracking-wider">
                 ชื่อ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-white text-[20px] tracking-wider">
                 จำนวนคน
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-white text-[20px] tracking-wider">
                 เบอร์โทร
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-white text-[20px] tracking-wider">
                 เวลา
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-white text-[20px] tracking-wider">
                 จัดการ
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {waitlist.map((customer, index) => (
-              <tr key={customer.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {index + 1}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {customer.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {customer.size} คน
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {customer.phone || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {customer.timestamp.toLocaleTimeString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <tr key={customer.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-center">{index + 1}</td>
+                <td className="px-6 py-4">{customer.name}</td>
+                <td className="px-6 py-4">{customer.size} คน</td>
+                <td className="px-6 py-4">{customer.phone || '-'}</td>
+                <td className="px-6 py-4">{customer.timestamp.toLocaleTimeString()}</td>
+                <td className="px-6 py-4 text-right">
                   <button
                     onClick={() => removeFromWaitlist(customer.id)}
-                    className="text-red-600 hover:text-red-900"
+                    className="inline-block border-2 border-[#990000] text-[#990000] bg-white hover:bg-[#990000] hover:text-white transition-all duration-200 rounded-[20px] px-4 py-1 font-semibold"
                   >
                     ลบคิว
                   </button>
