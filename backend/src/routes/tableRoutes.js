@@ -6,6 +6,7 @@ import {
   reserveTable,
   cancelReservation,
   closeTable,
+  verifyPIN,
 } from "../controllers/tableController.js";
 import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
 
@@ -14,6 +15,7 @@ const router = express.Router();
 // Public routes (no auth required for demo)
 router.get("/", getAllTables);
 router.get("/:tableNumber", getTableByNumber);
+router.post("/:tableNumber/verify-pin", verifyPIN);
 
 // Admin routes (temporarily public for demo - TODO: add authentication)
 router.post("/:tableNumber/open", openTable);

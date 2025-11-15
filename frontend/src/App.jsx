@@ -6,7 +6,6 @@ import AdminLayout from "@/components/layout/AdminLayout";
 // User Pages
 import Home from "@/page/user/Home";
 import MenuPage from "@/page/user/MenuPage";
-import CartPage from "@/page/user/CartPage";
 import ReservationPage from "@/page/user/ReservationPage";
 import OrderPage from "@/page/user/OrderPage";
 import HistoryPage from "@/page/user/HistoryPage";
@@ -35,8 +34,7 @@ function App() {
         {/* User Routes */}
         <Route path="/" element={<UserLayout />}>
           <Route index element={<Home />} />
-          <Route path="menu" element={<MenuPage />} />
-          <Route path="cart" element={<CartPage />} />
+          <Route path="menu/:encryptedId" element={<MenuPage />} />
           <Route path="table" element={<ReservationPage />} />
           <Route path="reservation" element={<ReservationPage />} />
           {/* Support both /:tableId and /:tableId/order for compatibility */}

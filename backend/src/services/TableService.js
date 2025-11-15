@@ -1,5 +1,22 @@
 import Table from "../models/Table.js";
 import BillingService from "./BillingService.js";
+import CryptoJS from "crypto-js";
+
+// Encryption utilities
+const SECRET_KEY = process.env.ENCRYPTION_KEY || "moomoo-secret-key-2024";
+
+function generatePIN() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+function encryptTableId(tableNumber) {
+  const encrypted = CryptoJS.AES.encrypt(
+    String(tableNumber),
+    SECRET_KEY
+  ).toString();
+  // Make URL-safe by replacing special characters
+  return encodeURIComponent(encrypted);
+}
 
 class TableService {
   /**
@@ -39,6 +56,10 @@ class TableService {
     // Clear any existing bill reference first (safety check)
     table.currentBill = null;
 
+    // Generate PIN and encrypted ID
+    const pin = generatePIN();
+    const encryptedId = encryptTableId(tableNumber);
+
     // Update table
     table.status = "Open";
     table.customerCount = customerCount;
@@ -47,6 +68,8 @@ class TableService {
     table.openedAt = new Date();
     table.reservedAt = null;
     table.reservationExpiresAt = null;
+    table.pin = pin;
+    table.encryptedId = encryptedId;
 
     await table.save();
 
@@ -182,6 +205,8 @@ class TableService {
     table.reservationExpiresAt = null;
     table.reservationNotes = null;
     table.currentBill = null;
+    table.pin = null;
+    table.encryptedId = null;
     table.diningTimeRemaining = 5400000; // Reset to 90 minutes
 
     await table.save();
@@ -277,6 +302,39 @@ class TableService {
     await table.save();
 
     return table;
+  }
+
+  /**
+   * Verify PIN for a table
+   * @param {number} tableNumber - Table number (1-10)
+   * @param {string} pin - 4-digit PIN to verify
+   * @returns {Promise<Object>} Verification result with encryptedId if valid
+   */
+  async verifyPIN(tableNumber, pin) {
+    const table = await Table.findOne({ tableNumber });
+
+    if (!table) {
+      throw new Error("Table not found");
+    }
+
+    if (table.status !== "Open") {
+      throw new Error(`Table is not open (current status: ${table.status})`);
+    }
+
+    if (!table.pin) {
+      throw new Error("No PIN set for this table");
+    }
+
+    if (table.pin !== pin) {
+      return { valid: false, message: "Invalid PIN" };
+    }
+
+    return {
+      valid: true,
+      encryptedId: table.encryptedId,
+      tableNumber: table.tableNumber,
+      message: "PIN verified successfully",
+    };
   }
 }
 

@@ -58,6 +58,16 @@ const tableSchema = new mongoose.Schema({
     ref: "Bill",
     default: null,
   },
+  pin: {
+    type: String,
+    default: null,
+    minlength: 4,
+    maxlength: 4,
+  },
+  encryptedId: {
+    type: String,
+    default: null,
+  },
   updatedAt: {
     type: Date,
     default: Date.now,
