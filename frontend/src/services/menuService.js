@@ -65,6 +65,26 @@ class MenuService {
     }
   }
 
+  /**
+   * Get menu items by category
+   * @param {String} category - 'Starter Buffet', 'Premium Buffet', 'Special Menu', or null for all
+   * @returns {Array} Menu items
+   */
+  async getMenuItems(category = null) {
+    try {
+      const url = category
+        ? `/menu?category=${encodeURIComponent(category)}`
+        : "/menu";
+      const response = await this.api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch menu items:", error);
+      throw new Error(
+        "Unable to load menu. Please check your connection and try again."
+      );
+    }
+  }
+
   // Get all menu items
   async getAllMenuItems() {
     try {
@@ -150,6 +170,40 @@ class MenuService {
   }
 
   // Menu management functions for admin
+
+  /**
+   * Create a new menu item (admin only)
+   * @param {Object} data - Menu item data
+   * @returns {Promise} Created menu item
+   */
+  async createMenuItem(data) {
+    try {
+      const response = await this.api.post("/menu", data);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to create menu item:", error);
+      throw new Error(
+        error.response?.data?.message ||
+          "Failed to create menu item. Please try again."
+      );
+    }
+  }
+
+  /**
+   * Get a specific menu item by ID
+   * @param {String} id - Menu item ID
+   * @returns {Promise} Menu item
+   */
+  async getMenuItemById(id) {
+    try {
+      const response = await this.api.get(`/menu/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch menu item:", error);
+      throw new Error("Failed to load menu item. Please try again.");
+    }
+  }
+
   async addMenuItem(menuItemData) {
     try {
       const response = await this.api.post("/menu", menuItemData);
@@ -166,17 +220,52 @@ class MenuService {
       return response.data;
     } catch (error) {
       console.error("Failed to update menu item:", error);
-      throw new Error("Failed to update menu item. Please try again.");
+      throw new Error(
+        error.response?.data?.message ||
+          "Failed to update menu item. Please try again."
+      );
+    }
+  }
+
+  /**
+   * Toggle menu item availability (admin only)
+   * @param {String} id - Menu item ID
+   * @param {String} availability - "Available" or "Out of Stock"
+   * @returns {Promise} Updated menu item
+   */
+  async toggleAvailability(id, availability) {
+    try {
+      const response = await this.api.patch(`/menu/${id}/availability`, {
+        availability,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Failed to toggle availability:", error);
+      throw new Error("Failed to update availability. Please try again.");
     }
   }
 
   async deleteMenuItem(id) {
     try {
-      await this.api.delete(`/menu/${id}`);
-      return true;
+      const response = await this.api.delete(`/menu/${id}`);
+      return response.data;
     } catch (error) {
       console.error("Failed to delete menu item:", error);
       throw new Error("Failed to delete menu item. Please try again.");
+    }
+  }
+
+  /**
+   * Get menu items grouped by category
+   * @returns {Promise} Menu items grouped by category
+   */
+  async getMenuByCategory() {
+    try {
+      const response = await this.api.get("/menu/grouped/category");
+      return response.data;
+    } catch (error) {
+      console.error("Failed to fetch grouped menu:", error);
+      throw new Error("Failed to load menu. Please try again.");
     }
   }
 }

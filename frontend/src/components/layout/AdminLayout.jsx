@@ -1,16 +1,19 @@
 import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft } from "lucide-react";
+import { Flame, Settings, Users, ShoppingCart, FileText, Clock, ArrowLeft, Globe } from "lucide-react";
 
 import background from "@/assets/background.png";
+import { useBilingual } from "@/hook/useBilingual";
 
 const AdminLayout = () => {
+  const { language, toggleLanguage, t } = useBilingual();
+
   const adminMenuItems = [
-    { name: "เมนู", path: "/admin/menu", icon: FileText },
-    { name: "ออเดอร์", path: "/admin/orders", icon: ShoppingCart },
-    { name: "โต๊ะ", path: "/admin/tables", icon: Users },
-    { name: "บิล", path: "/admin/billing", icon: Settings },
-    { name: "คิวรอ", path: "/admin/waitlist", icon: Clock },
+    { name: t("admin.menu"), path: "/admin/menu", icon: FileText },
+    { name: t("admin.queue"), path: "/admin/orders", icon: ShoppingCart },
+    { name: t("admin.tables"), path: "/admin/tables", icon: Users },
+    { name: t("admin.billing"), path: "/admin/billing", icon: Settings },
+    { name: t("admin.waitlist"), path: "/admin/waitlist", icon: Clock },
   ];
 
   return (
@@ -36,7 +39,7 @@ const AdminLayout = () => {
                   <Flame className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-serif font-bold text-white">มูคระทา</h1>
+                  <h1 className="text-xl font-serif font-bold text-white">{t("app.name")}</h1>
                   <p className="text-xs text-red-400">Admin Panel</p>
                 </div>
               </div>
@@ -64,14 +67,25 @@ const AdminLayout = () => {
                 })}
               </div>
 
-              {/* Back to Store */}
-              <NavLink
-                to="/"
-                className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                กลับหน้าร้าน
-              </NavLink>
+              {/* Language Toggle & Back to Store */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleLanguage}
+                  className="flex items-center px-3 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+                  title="Toggle Language"
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  <span className="text-sm">{language.toUpperCase()}</span>
+                </button>
+
+                <NavLink
+                  to="/"
+                  className="flex items-center px-4 py-2 bg-gray-800 text-gray-300 hover:text-white hover:bg-gray-700 rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  {language === 'th' ? 'กลับหน้าร้าน' : 'Back to Store'}
+                </NavLink>
+              </div>
             </div>
 
             {/* Mobile Menu */}

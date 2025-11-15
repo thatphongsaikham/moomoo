@@ -1,69 +1,105 @@
-import Order from "../models/Order.js";
+import asyncHandler from "express-async-handler";
+import OrderService from "../services/OrderService.js";
 
-export const createOrder = async (req, res) => {
-  try {
-    const order = await Order.create(req.body);
-    res.status(201).json(order);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+/**
+ * @route   POST /api/orders
+ * @desc    Create a new order
+ * @access  Public (no auth required for customer orders)
+ * @body    { tableNumber: Number, items: [{menuItem: String, quantity: Number}], notes: String }
+ */
+export const createOrder = asyncHandler(async (req, res) => {
+  const { tableNumber, items, notes } = req.body;
+
+  // Validation
+  if (!tableNumber || !items || !Array.isArray(items) || items.length === 0) {
+    res.status(400);
+    throw new Error("Table number and items array are required");
   }
-};
 
-export const getOrders = async (req, res) => {
-  try {
-    // Get all pending orders from MongoDB
-    const pendingOrders = await Order.find({ status: "pending" }).sort({
-      createdAt: 1,
-    });
-
-    // Separate into normal and special based on menuType
-    const normal = pendingOrders.filter((order) => order.menuType === "normal");
-    const special = pendingOrders.filter(
-      (order) => order.menuType === "special"
-    );
-
-    res.json({
-      normal,
-      special,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  // Validate table number range
+  if (tableNumber < 1 || tableNumber > 10) {
+    res.status(400);
+    throw new Error("Table number must be between 1 and 10");
   }
-};
 
-export const completeOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updatedOrder = await Order.findByIdAndUpdate(
-      id,
-      {
-        status: "delivered",
-        completedAt: new Date(),
-      },
-      { new: true }
-    );
-
-    if (!updatedOrder) {
-      return res.status(404).json({ error: "Order not found" });
+  // Validate items structure
+  for (const item of items) {
+    if (!item.menuItem || !item.quantity || item.quantity < 1) {
+      res.status(400);
+      throw new Error("Each item must have menuItem ID and quantity >= 1");
     }
-
-    res.json({ message: `Order ${id} completed`, order: updatedOrder });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
-};
 
-export const deleteOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedOrder = await Order.findByIdAndDelete(id);
+  // Create order via service
+  const order = await OrderService.placeOrder(tableNumber, items, notes);
 
-    if (!deletedOrder) {
-      return res.status(404).json({ error: "Order not found" });
-    }
+  res.status(201).json({
+    success: true,
+    message: `Order placed in ${order.queueType} queue`,
+    data: order,
+  });
+});
 
-    res.json({ message: `Order ${id} deleted`, order: deletedOrder });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+/**
+ * @route   GET /api/orders/queue/:queueType
+ * @desc    Get all pending orders for a specific queue
+ * @access  Private (admin only)
+ * @param   queueType - 'Normal' or 'Special'
+ */
+export const getQueueOrders = asyncHandler(async (req, res) => {
+  const { queueType } = req.params;
+
+  if (!["Normal", "Special"].includes(queueType)) {
+    res.status(400);
+    throw new Error("Queue type must be Normal or Special");
   }
-};
+
+  const orders = await OrderService.getQueueOrders(queueType);
+
+  res.status(200).json({
+    success: true,
+    count: orders.length,
+    data: orders,
+  });
+});
+
+/**
+ * @route   GET /api/orders/table/:tableNumber
+ * @desc    Get all orders for a specific table
+ * @access  Public (customers can view their table's orders)
+ * @param   tableNumber - Table number (1-10)
+ */
+export const getTableOrders = asyncHandler(async (req, res) => {
+  const tableNumber = parseInt(req.params.tableNumber);
+
+  if (isNaN(tableNumber) || tableNumber < 1 || tableNumber > 10) {
+    res.status(400);
+    throw new Error("Invalid table number");
+  }
+
+  const orders = await OrderService.getTableOrders(tableNumber);
+
+  res.status(200).json({
+    success: true,
+    count: orders.length,
+    data: orders,
+  });
+});
+
+/**
+ * @route   PATCH /api/orders/:id/complete
+ * @desc    Mark an order as completed
+ * @access  Private (admin only)
+ * @param   id - Order ID
+ */
+export const completeOrder = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const order = await OrderService.completeOrder(id);
+
+  res.status(200).json({
+    success: true,
+    message: "Order marked as completed",
+    data: order,
+  });
+});

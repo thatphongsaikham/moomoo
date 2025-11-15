@@ -1,0 +1,120 @@
+{
+  "translation": {
+    "app": {
+      "name": "MOOMOO Restaurant",
+      "tagline": "Thai Hot Pot & BBQ Buffet"
+    },
+    "common": {
+      "loading": "กำลังโหลด...",
+      "error": "เกิดข้อผิดพลาด",
+      "success": "สำเร็จ",
+      "confirm": "ยืนยัน",
+      "cancel": "ยกเลิก",
+      "save": "บันทึก",
+      "delete": "ลบ",
+      "edit": "แก้ไข",
+      "close": "ปิด",
+      "back": "กลับ",
+      "next": "ถัดไป",
+      "submit": "ส่ง",
+      "search": "ค้นหา",
+      "filter": "กรอง"
+    },
+    "nav": {
+      "home": "หน้าหลัก",
+      "menu": "เมนู",
+      "cart": "ตะกร้า",
+      "orders": "ออเดอร์",
+      "history": "ประวัติ",
+      "profile": "โปรไฟล์",
+      "reservation": "จองโต๊ะ"
+    },
+    "admin": {
+      "dashboard": "แดชบอร์ด",
+      "tables": "จัดการโต๊ะ",
+      "queue": "คิวออเดอร์",
+      "menu": "จัดการเมนู",
+      "billing": "บิลและการเงิน",
+      "waitlist": "รายการรอ",
+      "settings": "ตั้งค่า"
+    },
+    "table": {
+      "available": "ว่าง",
+      "reserved": "จองแล้ว",
+      "open": "เปิดใช้งาน",
+      "closed": "ปิดแล้ว",
+      "tableNumber": "โต๊ะหมายเลข",
+      "customers": "จำนวนลูกค้า",
+      "diningTime": "เวลาทานอาหาร",
+      "timeRemaining": "เวลาคงเหลือ",
+      "openTable": "เปิดโต๊ะ",
+      "closeTable": "ปิดโต๊ะ",
+      "reserveTable": "จองโต๊ะ",
+      "cancelReservation": "ยกเลิกการจอง"
+    },
+    "menu": {
+      "category": "หมวดหมู่",
+      "starterBuffet": "บุฟเฟ่ต์สตาร์ทเตอร์",
+      "premiumBuffet": "บุฟเฟ่ต์พรีเมี่ยม",
+      "specialMenu": "เมนูพิเศษ",
+      "available": "พร้อมเสิร์ฟ",
+      "outOfStock": "หมด",
+      "price": "ราคา",
+      "addToCart": "ใส่ตะกร้า",
+      "quantity": "จำนวน"
+    },
+    "order": {
+      "placeOrder": "สั่งอาหาร",
+      "orderNumber": "หมายเลขออเดอร์",
+      "orderTime": "เวลาสั่ง",
+      "tableNumber": "โต๊ะหมายเลข",
+      "status": {
+        "pending": "รอดำเนินการ",
+        "completed": "เสร็จสิ้น"
+      },
+      "queue": {
+        "normal": "คิวบุฟเฟ่ต์",
+        "special": "คิวพิเศษ"
+      },
+      "markCompleted": "ทำเสร็จแล้ว"
+    },
+    "bill": {
+      "billNumber": "หมายเลขบิล",
+      "buffetCharges": "ค่าบุฟเฟ่ต์",
+      "specialItems": "รายการพิเศษ",
+      "subtotal": "ยอดรวมก่อน VAT",
+      "vat": "VAT 7%",
+      "total": "ยอดรวมสุทธิ",
+      "paymentMethod": "วิธีการชำระเงิน",
+      "cash": "เงินสด",
+      "creditCard": "บัตรเครดิต",
+      "debitCard": "บัตรเดบิต",
+      "mobilePayment": "จ่ายผ่านมือถือ",
+      "unpaid": "ยังไม่ชำระ",
+      "printBill": "พิมพ์บิล",
+      "closeBill": "ปิดบิล"
+    },
+    "buffet": {
+      "starter": "สตาร์ทเตอร์",
+      "premium": "พรีเมี่ยม",
+      "pricePerPerson": "ราคาต่อคน",
+      "starterPrice": "259 บาท",
+      "premiumPrice": "299 บาท",
+      "diningLimit": "90 นาที"
+    },
+    "reservation": {
+      "reserve": "จองโต๊ะ",
+      "reservationTime": "เวลาจอง",
+      "expiresIn": "หมดอายุใน",
+      "autoRelease": "ปล่อยอัตโนมัติใน 15 นาที"
+    },
+    "validation": {
+      "required": "กรุณากรอกข้อมูล",
+      "invalidTableNumber": "หมายเลขโต๊ะไม่ถูกต้อง",
+      "tableNotAvailable": "โต๊ะไม่ว่าง",
+      "minCustomers": "ต้องมีลูกค้าอย่างน้อย 1 คน",
+      "maxCustomers": "ลูกค้าได้สูงสุด 4 คน",
+      "selectBuffetTier": "กรุณาเลือกประเภทบุฟเฟ่ต์"
+    }
+  }
+}

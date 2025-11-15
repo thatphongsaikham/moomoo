@@ -1,41 +1,89 @@
 import React from "react";
+import { Clock, Users } from 'lucide-react';
+import { useBilingual } from '../../hook/useBilingual';
 
-export default function OrderCard({ order, onComplete, borderColor, badgeColor, dotColor }) {
+/**
+ * OrderCard Component - Display order details with queue type badge
+ * @param {Object} props
+ * @param {Object} props.order - Order object
+ * @param {Function} props.onComplete - Handler for completing order
+ */
+export default function OrderCard({ order, onComplete }) {
+  const { isThai } = useBilingual();
+
+  // Queue type styling
+  const isNormalQueue = order.queueType === 'Normal';
+  const borderColor = isNormalQueue ? 'border-blue-400' : 'border-purple-400';
+  const badgeColor = isNormalQueue ? 'bg-blue-500' : 'bg-purple-500';
+  const dotColor = isNormalQueue ? 'bg-blue-500' : 'bg-purple-500';
+
+  // Format time
+  const orderTime = new Date(order.createdAt).toLocaleTimeString(
+    isThai ? 'th-TH' : 'en-US',
+    { hour: '2-digit', minute: '2-digit' }
+  );
+
   return (
-    <div className={`group relative rounded-2xl p-6 shadow-lg border-2 ${borderColor} bg-white`}>
-      <div className={`absolute -top-4 -right-4 ${badgeColor} w-16 h-16 rounded-full flex items-center justify-center`}>
-        <div className="text-center">
-          <div className="text-xs font-bold text-black">โต๊ะ</div>
-          <div className="text-2xl font-black text-black">{order.tableId}</div>
+    <div className={`group relative rounded-2xl p-6 shadow-lg border-2 ${borderColor} bg-white hover:shadow-xl transition-shadow`}>
+      {/* Queue Type Badge */}
+      <div className={`absolute -top-3 -right-3 ${badgeColor} px-4 py-2 rounded-full shadow-lg`}>
+        <div className="text-xs font-bold text-white">
+          {order.queueType} Queue
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between">
-        <div className="flex-1 pr-4">
-          <h3 className="text-lg font-bold text-black mb-3">รายการอาหาร</h3>
+      {/* Table Number Badge */}
+      <div className="flex items-center gap-2 mb-4">
+        <Users className="w-5 h-5 text-gray-600" />
+        <span className="text-xl font-bold text-gray-800">
+          {isThai ? 'โต๊ะ' : 'Table'} {order.tableNumber}
+        </span>
+      </div>
 
-          <div className="bg-white rounded-xl p-5 shadow">
-            {order.items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 text-black">
-                <div className={`w-2 h-2 ${dotColor} rounded-full`} />
-                <span>{item.name} x{item.qty}</span>
+      {/* Order Items */}
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase">
+          {isThai ? 'รายการอาหาร' : 'Order Items'}
+        </h3>
+        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+          {order.items.map((item, index) => (
+            <div key={index} className="flex items-start gap-3">
+              <div className={`w-2 h-2 ${dotColor} rounded-full mt-2 flex-shrink-0`} />
+              <div className="flex-1">
+                <div className="font-medium text-gray-800">
+                  {isThai ? item.nameThai : item.nameEnglish}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {isThai ? 'จำนวน' : 'Qty'}: {item.quantity} × ฿{item.price}
+                </div>
               </div>
-            ))}
-          </div>
-
-          <div className="text-sm text-black mt-3">
-            เวลา: {new Date(order.createdAt).toLocaleTimeString("th-TH")}
-          </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="flex-shrink-0 self-center">
-          <button
-            onClick={() => onComplete(order._id)}
-            className="w-[120px] bg-green-700 text-white py-3 rounded-xl font-bold shadow hover:bg-green-800"
-          >
-            เสร็จสิ้น
-          </button>
+      {/* Order Notes */}
+      {order.notes && (
+        <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+          <div className="text-xs font-semibold text-yellow-800 mb-1">
+            {isThai ? 'หมายเหตุ' : 'Notes'}
+          </div>
+          <div className="text-sm text-yellow-900">{order.notes}</div>
         </div>
+      )}
+
+      {/* Footer with Time and Complete Button */}
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <Clock className="w-4 h-4" />
+          <span>{orderTime}</span>
+        </div>
+        <button
+          onClick={() => onComplete(order._id)}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
+        >
+          {isThai ? 'เสร็จสิ้น' : 'Complete'}
+        </button>
       </div>
     </div>
   );

@@ -1,240 +1,262 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, Plus, Minus, Trash2, Flame, Clock, Users } from 'lucide-react';
+import { ShoppingCart, Trash2, Loader2, Send } from 'lucide-react';
+import orderService from '@/services/orderService';
+import menuService from '@/services/menuService';
+import { useBilingual } from '@/hook/useBilingual';
 
+/**
+ * CartPage - Review cart and submit order
+ */
 function CartPage() {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [tableInfo, setTableInfo] = useState(null);
+  const { t, isThai } = useBilingual();
+  
+  const [cart, setCart] = useState({});
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [tableNumber, setTableNumber] = useState(null);
+  const [notes, setNotes] = useState('');
 
-  // Mock cart data
+  // Load cart and menu data
   useEffect(() => {
-    const mockCartItems = [
-      {
-        id: 1,
-        name: 'เซ็ตมาตรฐาน',
-        nameEn: 'Standard Set',
-        price: 259,
-        quantity: 1,
-        category: 'package',
-        description: 'เหมาะสำหรับ 2 ท่าน',
-        items: ['หมูสไลซ์', 'สามชั้น', 'ลูกชิ้นรวม', 'ผักสด']
-      },
-      {
-        id: 2,
-        name: 'หอยแครง',
-        nameEn: 'Scallops',
-        price: 120,
-        quantity: 2,
-        category: 'special',
-        description: 'หอยแครงสดๆ นำเข้า'
-      }
-    ];
+    const loadData = async () => {
+      try {
+        // Get table number
+        const storedTableNumber = localStorage.getItem('tableNumber');
+        if (!storedTableNumber) {
+          alert(isThai ? 'กรุณาระบุหมายเลขโต๊ะ' : 'Please enter table number');
+          navigate('/');
+          return;
+        }
+        setTableNumber(parseInt(storedTableNumber));
 
-    const mockTableInfo = {
-      tableId: 'T05',
-      tableName: 'โต๊ะ 5',
-      seats: 4,
-      tier: 'standard'
+        // Load cart
+        const storedCart = localStorage.getItem('cart');
+        if (storedCart) {
+          setCart(JSON.parse(storedCart));
+        }
+
+        // Load menu items
+        const response = await menuService.getAllMenuItems();
+        setMenuItems(response.data || response);
+      } catch (error) {
+        console.error('Failed to load cart data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
+    loadData();
+  }, [navigate, isThai]);
 
-    setCartItems(mockCartItems);
-    setTableInfo(mockTableInfo);
-  }, []);
-
-  const updateQuantity = (itemId, change) => {
-    setCartItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newQuantity = Math.max(0, item.quantity + change);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
+  // Get cart items with menu data
+  const getCartItems = () => {
+    return Object.entries(cart)
+      .map(([itemId, quantity]) => {
+        const menuItem = menuItems.find(item => item._id === itemId);
+        return menuItem ? { menuItem, quantity } : null;
+      })
+      .filter(Boolean);
   };
 
-  const removeItem = (itemId) => {
-    setCartItems(prev => prev.filter(item => item.id !== itemId));
+  // Update quantity
+  const updateQuantity = (itemId, newQuantity) => {
+    const newCart = { ...cart };
+    if (newQuantity <= 0) {
+      delete newCart[itemId];
+    } else {
+      newCart[itemId] = newQuantity;
+    }
+    setCart(newCart);
+    localStorage.setItem('cart', JSON.stringify(newCart));
   };
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  const calculateServiceCharge = () => {
-    return Math.round(calculateSubtotal() * 0.10); // 10% service charge
-  };
-
+  // Calculate total
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateServiceCharge();
+    return getCartItems().reduce((sum, item) => {
+      return sum + (item.menuItem.price * item.quantity);
+    }, 0);
   };
 
-  const proceedToCheckout = () => {
+  // Submit order
+  const handleSubmitOrder = async () => {
+    const cartItems = getCartItems();
     if (cartItems.length === 0) {
-      alert('กรุณาเพิ่มสินค้าในตะกร้า');
+      alert(isThai ? 'ตะกร้าว่างเปล่า' : 'Cart is empty');
       return;
     }
-    navigate('/checkout');
+
+    try {
+      setSubmitting(true);
+      
+      // Format items for API
+      const items = Object.entries(cart).map(([menuItem, quantity]) => ({
+        menuItem,
+        quantity,
+      }));
+
+      // Submit order
+      const response = await orderService.placeOrder(tableNumber, items, notes);
+      
+      // Clear cart
+      localStorage.removeItem('cart');
+      setCart({});
+      
+      // Show success
+      alert(
+        isThai
+          ? `สั่งอาหารสำเร็จ! ออเดอร์ของคุณอยู่ใน ${response.data.queueType} queue`
+          : `Order placed successfully! Your order is in the ${response.data.queueType} queue`
+      );
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to submit order:', error);
+      alert(error.message || (isThai ? 'ไม่สามารถสั่งอาหารได้' : 'Failed to place order'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">กำลังโหลดตะกร้า...</p>
-          <p className="text-gray-400 text-sm mt-2">Loading cart...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
       </div>
     );
   }
 
+  const cartItems = getCartItems();
+  const total = calculateTotal();
+
   return (
-    <div className="min-h-screen bg-black">
-      {/* Hero Section */}
-      <section className="relative py-16 px-4 bg-gradient-to-b from-black to-gray-900">
-        <div className="absolute inset-0 opacity-20">
-          <img src="/src/assets/background.png" alt="Cart Background" className="w-full h-full object-cover" />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="bg-red-600 p-3 rounded-full">
-              <ShoppingCart className="w-10 h-10 text-white" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {isThai ? 'ตะกร้า' : 'Cart'}
+              </h1>
+              <p className="text-sm text-gray-600">
+                {isThai ? 'โต๊ะที่' : 'Table'} {tableNumber}
+              </p>
             </div>
+            <ShoppingCart className="w-8 h-8 text-red-600" />
           </div>
-          <h1 className="text-4xl font-serif font-bold text-white mb-4">ตะกร้าของคุณ</h1>
-          <p className="text-xl text-red-400 font-serif mb-6">Your Cart</p>
-
-          {tableInfo && (
-            <div className="inline-flex items-center bg-gray-900/50 border border-red-600/30 rounded-lg px-4 py-2 mb-4">
-              <Users className="w-5 h-5 text-red-500 mr-2" />
-              <span className="text-white">{tableInfo.tableName} - {tableInfo.seats} ที่นั่ง</span>
-            </div>
-          )}
         </div>
-      </section>
+      </div>
 
       {/* Cart Content */}
-      <section className="py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          {cartItems.length === 0 ? (
-            <div className="text-center py-16">
-              <ShoppingCart className="w-24 h-24 text-gray-600 mx-auto mb-6" />
-              <h2 className="text-2xl font-serif font-semibold text-white mb-4">ตะกร้าว่าง</h2>
-              <p className="text-gray-400 mb-8">ยังไม่มีสินค้าในตะกร้าของคุณ</p>
-              <button
-                onClick={() => navigate('/menu')}
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
-              >
-                ดูเมนู / View Menu
-              </button>
-            </div>
-          ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Cart Items */}
-              <div className="lg:col-span-2">
-                <div className="bg-gray-900/50 border border-red-600/20 rounded-2xl p-6">
-                  <h3 className="text-xl font-serif font-semibold text-white mb-6">รายการสินค้า</h3>
-
-                  <div className="space-y-4">
-                    {cartItems.map((item) => (
-                      <div key={item.id} className="bg-black/50 border border-red-600/10 rounded-xl p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <h4 className="text-lg font-semibold text-white">{item.name}</h4>
-                            <p className="text-red-400 text-sm mb-1">{item.nameEn}</p>
-                            <p className="text-gray-400 text-sm">{item.description}</p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="text-red-500 hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-colors"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <span className="text-white font-semibold w-8 text-center">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white font-semibold">฿{item.price * item.quantity}</p>
-                            <p className="text-gray-500 text-sm">฿{item.price} × {item.quantity}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+      <div className="container mx-auto px-4 py-6">
+        {cartItems.length === 0 ? (
+          <div className="text-center py-16">
+            <ShoppingCart className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">
+              {isThai ? 'ตะกร้าว่างเปล่า' : 'Your cart is empty'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isThai ? 'เพิ่มรายการอาหารจากเมนู' : 'Add items from the menu'}
+            </p>
+            <button
+              onClick={() => navigate('/menu')}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+            >
+              {isThai ? 'ดูเมนู' : 'View Menu'}
+            </button>
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto">
+            {/* Cart Items */}
+            <div className="bg-white rounded-lg shadow-sm mb-6">
+              {cartItems.map(({ menuItem, quantity }) => (
+                <div
+                  key={menuItem._id}
+                  className="flex items-center justify-between p-4 border-b last:border-b-0"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800">
+                      {isThai ? menuItem.nameThai : menuItem.nameEnglish}
+                    </h3>
+                    <p className="text-sm text-gray-600">{menuItem.category}</p>
+                    <p className="text-red-600 font-bold mt-1">
+                      ฿{menuItem.price} × {quantity} = ฿{menuItem.price * quantity}
+                    </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              <div className="lg:col-span-1">
-                <div className="bg-gray-900/50 border border-red-600/20 rounded-2xl p-6 sticky top-4">
-                  <h3 className="text-xl font-serif font-semibold text-white mb-6">สรุปคำสั่งซื้อ</h3>
-
-                  <div className="space-y-4 mb-6">
-                    <div className="flex justify-between text-gray-300">
-                      <span>รวมสินค้า</span>
-                      <span>฿{calculateSubtotal()}</span>
-                    </div>
-                    <div className="flex justify-between text-gray-300">
-                      <span>ค่าบริการ (10%)</span>
-                      <span>฿{calculateServiceCharge()}</span>
-                    </div>
-                    <div className="border-t border-red-600/20 pt-4">
-                      <div className="flex justify-between text-xl font-bold text-white">
-                        <span>ทั้งหมด</span>
-                        <span className="text-red-500">฿{calculateTotal()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => navigate('/menu')}
-                      className="w-full border border-red-600 text-red-400 hover:bg-red-600 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300"
+                      onClick={() => updateQuantity(menuItem._id, quantity - 1)}
+                      className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
                     >
-                      เพิ่มสินค้า / Add Items
+                      -
+                    </button>
+                    <span className="w-8 text-center font-bold">{quantity}</span>
+                    <button
+                      onClick={() => updateQuantity(menuItem._id, quantity + 1)}
+                      className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center hover:bg-red-700"
+                    >
+                      +
                     </button>
                     <button
-                      onClick={proceedToCheckout}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                      onClick={() => updateQuantity(menuItem._id, 0)}
+                      className="ml-2 text-red-600 hover:text-red-800"
                     >
-                      ดำเนินการชำระเงิน / Checkout
+                      <Trash2 size={20} />
                     </button>
                   </div>
-
-                  {/* Delivery Info */}
-                  <div className="mt-6 p-4 bg-black/50 border border-red-600/10 rounded-lg">
-                    <div className="flex items-center text-gray-400 text-sm mb-2">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>เวลาจัดเก็บประมาณ 15-20 นาที</span>
-                    </div>
-                    <div className="flex items-center text-gray-400 text-sm">
-                      <Users className="w-4 h-4 mr-2" />
-                      <span>บริการที่โต๊ะของคุณ</span>
-                    </div>
-                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
-      </section>
+
+            {/* Notes */}
+            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                {isThai ? 'หมายเหตุ (ถ้ามี)' : 'Notes (optional)'}
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={isThai ? 'เช่น ไม่ใส่ผักชี' : 'e.g. No cilantro'}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
+                rows="3"
+              />
+            </div>
+
+            {/* Total */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex justify-between items-center text-xl font-bold">
+                <span className="text-gray-800">{isThai ? 'รวมทั้งหมด' : 'Total'}</span>
+                <span className="text-red-600">฿{total}</span>
+              </div>
+              {total === 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {isThai ? '(รายการบุฟเฟ่ต์ฟรี)' : '(Buffet items are free)'}
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={handleSubmitOrder}
+              disabled={submitting}
+              className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-4 rounded-lg font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>{isThai ? 'กำลังส่ง...' : 'Submitting...'}</span>
+                </>
+              ) : (
+                <>
+                  <Send size={20} />
+                  <span>{isThai ? 'ส่งออเดอร์' : 'Submit Order'}</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,29 +1,31 @@
 import express from "express";
 import {
   getAllMenuItems,
-  getMenuByTier,
-  getSpecialItems,
-  getCategories,
-  addMenuItem,
+  getMenuItemById,
+  createMenuItem,
   updateMenuItem,
+  toggleAvailability,
   deleteMenuItem,
+  getMenuByCategory,
 } from "../controllers/menuController.js";
+import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// GET routes
-router.get("/", getAllMenuItems);
-router.get("/tier/:tier", getMenuByTier);
-router.get("/special", getSpecialItems);
-router.get("/categories", getCategories);
+// Public routes
+router.get("/", getAllMenuItems); // Get all menu items with optional filters
+router.get("/grouped/category", getMenuByCategory); // Get menu grouped by category
+router.get("/:id", getMenuItemById); // Get specific menu item
 
-// POST routes
-router.post("/", addMenuItem);
-
-// PUT routes
-router.put("/:id", updateMenuItem);
-
-// DELETE routes
-router.delete("/:id", deleteMenuItem);
+// Admin-only routes
+router.post("/", authMiddleware, adminOnly, createMenuItem); // Create menu item
+router.put("/:id", authMiddleware, adminOnly, updateMenuItem); // Update menu item
+router.patch(
+  "/:id/availability",
+  authMiddleware,
+  adminOnly,
+  toggleAvailability
+); // Toggle availability
+router.delete("/:id", authMiddleware, adminOnly, deleteMenuItem); // Delete menu item
 
 export default router;

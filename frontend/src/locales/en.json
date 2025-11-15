@@ -1,0 +1,120 @@
+{
+  "translation": {
+    "app": {
+      "name": "MOOMOO Restaurant",
+      "tagline": "Thai Hot Pot & BBQ Buffet"
+    },
+    "common": {
+      "loading": "Loading...",
+      "error": "Error",
+      "success": "Success",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "save": "Save",
+      "delete": "Delete",
+      "edit": "Edit",
+      "close": "Close",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "search": "Search",
+      "filter": "Filter"
+    },
+    "nav": {
+      "home": "Home",
+      "menu": "Menu",
+      "cart": "Cart",
+      "orders": "Orders",
+      "history": "History",
+      "profile": "Profile",
+      "reservation": "Reservation"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "tables": "Table Management",
+      "queue": "Order Queue",
+      "menu": "Menu Management",
+      "billing": "Billing",
+      "waitlist": "Waitlist",
+      "settings": "Settings"
+    },
+    "table": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "open": "Open",
+      "closed": "Closed",
+      "tableNumber": "Table",
+      "customers": "Customers",
+      "diningTime": "Dining Time",
+      "timeRemaining": "Time Remaining",
+      "openTable": "Open Table",
+      "closeTable": "Close Table",
+      "reserveTable": "Reserve Table",
+      "cancelReservation": "Cancel Reservation"
+    },
+    "menu": {
+      "category": "Category",
+      "starterBuffet": "Starter Buffet",
+      "premiumBuffet": "Premium Buffet",
+      "specialMenu": "Special Menu",
+      "available": "Available",
+      "outOfStock": "Out of Stock",
+      "price": "Price",
+      "addToCart": "Add to Cart",
+      "quantity": "Quantity"
+    },
+    "order": {
+      "placeOrder": "Place Order",
+      "orderNumber": "Order #",
+      "orderTime": "Order Time",
+      "tableNumber": "Table",
+      "status": {
+        "pending": "Pending",
+        "completed": "Completed"
+      },
+      "queue": {
+        "normal": "Buffet Queue",
+        "special": "Special Queue"
+      },
+      "markCompleted": "Mark as Completed"
+    },
+    "bill": {
+      "billNumber": "Bill #",
+      "buffetCharges": "Buffet Charges",
+      "specialItems": "Special Items",
+      "subtotal": "Subtotal (Pre-VAT)",
+      "vat": "VAT 7%",
+      "total": "Total",
+      "paymentMethod": "Payment Method",
+      "cash": "Cash",
+      "creditCard": "Credit Card",
+      "debitCard": "Debit Card",
+      "mobilePayment": "Mobile Payment",
+      "unpaid": "Unpaid",
+      "printBill": "Print Bill",
+      "closeBill": "Close Bill"
+    },
+    "buffet": {
+      "starter": "Starter",
+      "premium": "Premium",
+      "pricePerPerson": "Per Person",
+      "starterPrice": "259 THB",
+      "premiumPrice": "299 THB",
+      "diningLimit": "90 minutes"
+    },
+    "reservation": {
+      "reserve": "Reserve Table",
+      "reservationTime": "Reservation Time",
+      "expiresIn": "Expires In",
+      "autoRelease": "Auto-release in 15 minutes"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidTableNumber": "Invalid table number",
+      "tableNotAvailable": "Table is not available",
+      "minCustomers": "Minimum 1 customer required",
+      "maxCustomers": "Maximum 4 customers allowed",
+      "selectBuffetTier": "Please select buffet tier"
+    }
+  }
+}

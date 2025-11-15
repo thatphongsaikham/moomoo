@@ -1,130 +1,133 @@
-import Menu from "../models/Menu.js";
+import asyncHandler from "express-async-handler";
+import MenuService from "../services/MenuService.js";
 
-// Get all menu items
-export const getAllMenuItems = async (req, res) => {
-  try {
-    const menuItems = await Menu.find({ isAvailable: true });
-    res.json(menuItems);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+/**
+ * @route   GET /api/menu
+ * @desc    Get all menu items with optional filtering
+ * @access  Public
+ * @query   category, availability
+ */
+export const getAllMenuItems = asyncHandler(async (req, res) => {
+  const { category, availability } = req.query;
+
+  const filters = {};
+  if (category) filters.category = category;
+  if (availability) filters.availability = availability;
+
+  const menuItems = await MenuService.getAllMenuItems(filters);
+
+  res.status(200).json({
+    success: true,
+    count: menuItems.length,
+    data: menuItems,
+  });
+});
+
+/**
+ * @route   GET /api/menu/:id
+ * @desc    Get a specific menu item by ID
+ * @access  Public
+ * @param   id - Menu item ID
+ */
+export const getMenuItemById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const menuItem = await MenuService.getMenuItemById(id);
+
+  res.status(200).json({
+    success: true,
+    data: menuItem,
+  });
+});
+
+/**
+ * @route   POST /api/menu
+ * @desc    Create a new menu item
+ * @access  Private (admin only)
+ * @body    { category, nameThai, nameEnglish, descriptionThai, descriptionEnglish, price, imageUrl }
+ */
+export const createMenuItem = asyncHandler(async (req, res) => {
+  const menuItem = await MenuService.createMenuItem(req.body);
+
+  res.status(201).json({
+    success: true,
+    message: "Menu item created successfully",
+    data: menuItem,
+  });
+});
+
+/**
+ * @route   PUT /api/menu/:id
+ * @desc    Update an existing menu item
+ * @access  Private (admin only)
+ * @param   id - Menu item ID
+ * @body    Fields to update
+ */
+export const updateMenuItem = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const menuItem = await MenuService.updateMenuItem(id, req.body);
+
+  res.status(200).json({
+    success: true,
+    message: "Menu item updated successfully",
+    data: menuItem,
+  });
+});
+
+/**
+ * @route   PATCH /api/menu/:id/availability
+ * @desc    Toggle menu item availability
+ * @access  Private (admin only)
+ * @param   id - Menu item ID
+ * @body    { availability: "Available" | "Out of Stock" }
+ */
+export const toggleAvailability = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { availability } = req.body;
+
+  if (!availability) {
+    res.status(400);
+    throw new Error("Availability status is required");
   }
-};
 
-// Get menu items by tier
-export const getMenuByTier = async (req, res) => {
-  try {
-    const { tier } = req.params;
-    const menuItems = await Menu.find({ tier, isAvailable: true });
-    res.json(menuItems);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+  const menuItem = await MenuService.toggleAvailability(id, availability);
 
-// Get special items (paid additions)
-export const getSpecialItems = async (req, res) => {
-  try {
-    const specialItems = await Menu.find({
-      isSpecial: true,
-      isAvailable: true,
-    });
-    res.json(specialItems);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+  res.status(200).json({
+    success: true,
+    message: `Menu item marked as ${availability}`,
+    data: menuItem,
+  });
+});
 
-// Get menu categories
-export const getCategories = async (req, res) => {
-  try {
-    const categories = await Menu.distinct("category");
-    const categoriesData = [
-      { id: "all", name: "ทั้งหมด", nameEn: "All Items" },
-      ...categories.map((cat) => ({
-        id: cat.toLowerCase().replace(/\s+/g, "-"),
-        name: cat,
-        nameEn: cat,
-      })),
-    ];
-    res.json(categoriesData);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+/**
+ * @route   DELETE /api/menu/:id
+ * @desc    Delete a menu item
+ * @access  Private (admin only)
+ * @param   id - Menu item ID
+ */
+export const deleteMenuItem = asyncHandler(async (req, res) => {
+  const { id } = req.params;
 
-// Add new menu item
-export const addMenuItem = async (req, res) => {
-  try {
-    // Validate required fields
-    if (!req.body.name || !req.body.category) {
-      return res.status(400).json({
-        message: "Missing required fields: name and category are required",
-      });
-    }
+  const menuItem = await MenuService.deleteMenuItem(id);
 
-    // Clean up the data
-    const menuData = {
-      name: req.body.name,
-      nameEn: req.body.nameEn || req.body.name,
-      price: parseFloat(req.body.price) || 0,
-      category: req.body.category,
-      description: req.body.description || "",
-      tier: req.body.tier || "standard",
-      isSpecial: req.body.isSpecial || false,
-      imageUrl: req.body.imageUrl || "",
-      isAvailable:
-        req.body.isAvailable !== undefined ? req.body.isAvailable : true,
-    };
+  res.status(200).json({
+    success: true,
+    message: "Menu item deleted successfully",
+    data: menuItem,
+  });
+});
 
-    const menuItem = new Menu(menuData);
-    const savedItem = await menuItem.save();
-    res.status(201).json(savedItem);
-  } catch (error) {
-    console.error("Error adding menu item:", error);
-    res.status(400).json({
-      message: error.message || "Failed to add menu item",
-      details: error.errors
-        ? Object.keys(error.errors).map((key) => error.errors[key].message)
-        : [],
-    });
-  }
-};
+/**
+ * @route   GET /api/menu/grouped/category
+ * @desc    Get menu items grouped by category (available only)
+ * @access  Public
+ */
+export const getMenuByCategory = asyncHandler(async (req, res) => {
+  const grouped = await MenuService.getMenuByCategory();
 
-// Update menu item
-export const updateMenuItem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updatedItem = await Menu.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    if (!updatedItem) {
-      return res.status(404).json({ message: "Menu item not found" });
-    }
-
-    res.json(updatedItem);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Delete menu item (soft delete by setting isAvailable to false)
-export const deleteMenuItem = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedItem = await Menu.findByIdAndUpdate(
-      id,
-      { isAvailable: false },
-      { new: true }
-    );
-
-    if (!deletedItem) {
-      return res.status(404).json({ message: "Menu item not found" });
-    }
-
-    res.json({ message: "Menu item deleted successfully" });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
+  res.status(200).json({
+    success: true,
+    data: grouped,
+  });
+});

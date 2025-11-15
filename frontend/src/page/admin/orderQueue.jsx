@@ -1,210 +1,172 @@
-import React, { useState, useEffect } from "react";
-import useOrderService from "../../services/userService";
-import OrderList from "../../components/order/orderList";
-import { ShoppingCart, Clock, TrendingUp, AlertCircle, Flame, RefreshCw } from "lucide-react";
+import React, { useState } from "react";
+import { ShoppingCart, Clock, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import OrderList from "../../components/order/OrderList";
+import { useOrderQueue } from "../../hook/useOrderQueue";
+import orderService from "../../services/orderService";
+import { useBilingual } from '../../hook/useBilingual';
 
 export default function OrderQueue() {
-  const { orders, loading, completeOrder } = useOrderService();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [error, setError] = useState(null);
+  const { isThai } = useBilingual();
+  const { normalQueue, specialQueue, loading, error, refetch } = useOrderQueue(3000); // 3s polling
+  const [completingOrder, setCompletingOrder] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const handleCompleteOrder = async (orderId) => {
     try {
-      await completeOrder(orderId);
-    } catch (error) {
-      setError(error.message);
-      setTimeout(() => setError(null), 3000);
+      setCompletingOrder(orderId);
+      await orderService.completeOrder(orderId);
+      
+      // Show success message
+      setSuccessMessage(isThai ? 'ทำเครื่องหมายออเดอร์เสร็จสิ้นแล้ว' : 'Order marked as completed');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      // Refetch queues to update UI
+      refetch();
+    } catch (err) {
+      console.error('Failed to complete order:', err);
+      alert(err.message || 'Failed to complete order');
+    } finally {
+      setCompletingOrder(null);
     }
   };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+  const totalCount = normalQueue.length + specialQueue.length;
 
-    return () => clearInterval(timer);
-  }, []);
-
-  if (loading || !orders) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">กำลังโหลดข้อมูลออเดอร์...</p>
-          <p className="text-gray-400 text-sm mt-2">Loading order data...</p>
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white text-lg">
+            {isThai ? 'กำลังโหลดคิวออเดอร์...' : 'Loading order queues...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  // ใช้ค่า default [] ป้องกัน undefined
-  const normalOrders = orders?.normal || [];
-  const specialOrders = orders?.special || [];
-  const totalCount = normalOrders.length + specialOrders.length;
-
   return (
-    <div className="p-6 md:p-8">
-      {/* Header Section */}
+    <div className="p-6 md:p-8 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      {/* Header */}
       <div className="text-center mb-8">
         <div className="flex justify-center items-center mb-4">
-          <div className="bg-red-600 p-3 rounded-full mr-4">
+          <div className="bg-blue-600 p-3 rounded-full mr-4">
             <ShoppingCart className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-serif font-bold text-white">
-              ระบบจัดการออเดอร์
+            <h1 className="text-4xl font-bold text-white">
+              {isThai ? 'คิวออเดอร์ครัว' : 'Kitchen Order Queue'}
             </h1>
-            <p className="text-red-400 text-lg mt-2">Order Management System</p>
+            <p className="text-blue-400 text-lg mt-2">
+              {isThai ? 'จัดการคิวธรรมดาและคิวพิเศษ' : 'Manage Normal & Special Queues'}
+            </p>
           </div>
         </div>
         <div className="flex items-center justify-center text-gray-400">
           <Clock className="w-4 h-4 mr-2" />
           <span className="font-mono">
-            {currentTime.toLocaleTimeString("th-TH", {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit"
+            {new Date().toLocaleTimeString(isThai ? 'th-TH' : 'en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
             })}
           </span>
         </div>
       </div>
 
-      {/* Summary Statistics */}
+      {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <SummaryCard
-          title="ออเดอร์ทั้งหมด"
-          titleEn="Total Orders"
+        <StatCard
+          title={isThai ? 'ออเดอร์ทั้งหมด' : 'Total Orders'}
           count={totalCount}
-          icon={ShoppingCart}
-          color="red"
-          trend={totalCount > 0 ? "up" : "neutral"}
+          color="bg-gradient-to-br from-blue-500 to-blue-600"
         />
-
-        <SummaryCard
-          title="เมนูปกติ"
-          titleEn="Standard Orders"
-          count={normalOrders.length}
-          icon={Flame}
-          color="red"
-          trend="neutral"
+        <StatCard
+          title={isThai ? 'คิวธรรมดา' : 'Normal Queue'}
+          count={normalQueue.length}
+          color="bg-gradient-to-br from-blue-400 to-blue-500"
         />
-
-        <SummaryCard
-          title="เมนูพิเศษ"
-          titleEn="Special Orders"
-          count={specialOrders.length}
-          icon={TrendingUp}
-          color="yellow"
-          trend="neutral"
+        <StatCard
+          title={isThai ? 'คิวพิเศษ' : 'Special Queue'}
+          count={specialQueue.length}
+          color="bg-gradient-to-br from-purple-400 to-purple-500"
         />
       </div>
 
-      {/* Status Alert */}
-      {totalCount === 0 && (
-        <div className="bg-yellow-600/20 border border-yellow-600/30 rounded-xl p-4 mb-8">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="bg-green-600/20 border border-green-600/50 rounded-xl p-4 mb-6 animate-pulse">
           <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-yellow-500 mr-3" />
-            <div>
-              <p className="text-yellow-400 font-semibold">ไม่มีออเดอร์ในคิว</p>
-              <p className="text-gray-400 text-sm mt-1">No orders in queue at the moment</p>
-            </div>
+            <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
+            <p className="text-green-400 font-semibold">{successMessage}</p>
           </div>
         </div>
       )}
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-600/20 border border-red-600/30 rounded-xl p-4 mb-8">
+        <div className="bg-red-600/20 border border-red-600/50 rounded-xl p-4 mb-6">
           <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+            <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
             <div>
-              <p className="text-red-400 font-semibold">เกิดข้อผิดพลาด</p>
+              <p className="text-red-400 font-semibold">
+                {isThai ? 'เกิดข้อผิดพลาด' : 'Error'}
+              </p>
               <p className="text-gray-400 text-sm">{error}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Order Lists */}
-      <div className="grid md:grid-cols-2 gap-8">
+      {/* Empty State */}
+      {totalCount === 0 && (
+        <div className="bg-gray-800 rounded-xl p-12 text-center border-2 border-gray-700 mb-8">
+          <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400 text-xl font-semibold">
+            {isThai ? 'ไม่มีออเดอร์ในคิว' : 'No orders in queue'}
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            {isThai ? 'รอออเดอร์ใหม่จากลูกค้า...' : 'Waiting for new customer orders...'}
+          </p>
+        </div>
+      )}
+
+      {/* Order Queues */}
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
         <OrderList
-          title="คิวเมนูปกติ"
-          titleEn="Standard Queue"
-          color="red"
-          orders={normalOrders}
+          queueType="Normal"
+          orders={normalQueue}
           onComplete={handleCompleteOrder}
         />
         <OrderList
-          title="คิวเมนูพิเศษ"
-          titleEn="Special Queue"
-          color="yellow"
-          orders={specialOrders}
+          queueType="Special"
+          orders={specialQueue}
           onComplete={handleCompleteOrder}
         />
       </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 flex justify-center">
+      {/* Refresh Button */}
+      <div className="flex justify-center">
         <button
-          onClick={() => window.location.reload()}
-          className="flex items-center px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+          onClick={refetch}
+          className="flex items-center px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors shadow-lg"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
-          รีเฟรชข้อมูล
+          {isThai ? 'รีเฟรชคิว' : 'Refresh Queues'}
         </button>
       </div>
     </div>
   );
 }
 
-function SummaryCard({ title, titleEn, count, icon: Icon, color, trend }) {
-  const getColorClasses = (colorType) => {
-    switch (colorType) {
-      case 'red':
-        return {
-          bg: 'bg-red-600/20',
-          border: 'border-red-600/40',
-          icon: 'text-red-500',
-          count: 'text-red-400'
-        };
-      case 'yellow':
-        return {
-          bg: 'bg-yellow-600/20',
-          border: 'border-yellow-600/40',
-          icon: 'text-yellow-500',
-          count: 'text-yellow-400'
-        };
-      default:
-        return {
-          bg: 'bg-gray-600/20',
-          border: 'border-gray-600/40',
-          icon: 'text-gray-500',
-          count: 'text-gray-400'
-        };
-    }
-  };
-
-  const colors = getColorClasses(color);
-
+function StatCard({ title, count, color }) {
   return (
-    <div className={`bg-black/50 backdrop-blur-sm border ${colors.border} rounded-2xl p-6 hover:border-opacity-60 transition-all duration-300 group hover:scale-105`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-lg ${colors.bg} group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`w-6 h-6 ${colors.icon}`} />
-        </div>
-        {trend && (
-          <div className="flex items-center">
-            <TrendingUp className={`w-4 h-4 ${trend === 'up' ? 'text-green-500' : 'text-gray-500'}`} />
-          </div>
-        )}
-      </div>
-
+    <div className={`${color} rounded-xl p-6 shadow-lg text-white`}>
       <div className="text-center">
-        <div className={`text-4xl md:text-5xl font-serif font-bold ${colors.count} mb-2`}>
-          {count}
+        <div className="text-5xl font-bold mb-2">{count}</div>
+        <div className="text-sm font-semibold uppercase tracking-wide opacity-90">
+          {title}
         </div>
-        <div className="text-white font-semibold">{title}</div>
-        <div className="text-gray-400 text-sm mt-1">{titleEn}</div>
       </div>
     </div>
   );

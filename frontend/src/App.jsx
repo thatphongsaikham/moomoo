@@ -7,7 +7,6 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import Home from "@/page/user/Home";
 import MenuPage from "@/page/user/MenuPage";
 import CartPage from "@/page/user/CartPage";
-import ProfilePage from "@/page/user/ProfilePage";
 import ReservationPage from "@/page/user/ReservationPage";
 import OrderPage from "@/page/user/OrderPage";
 import HistoryPage from "@/page/user/HistoryPage";
@@ -15,7 +14,7 @@ import HistoryPage from "@/page/user/HistoryPage";
 // Admin Pages
 import MenuManagement from "@/page/admin/menu";
 import OrderQueue from "@/page/admin/orderQueue";
-import TableManagement from "@/page/admin/tableManagement";
+import TableManagementWithActive from "@/page/admin/tableManagementWithActive";
 import BillingManagement from "@/page/admin/billingManagement";
 import WaitlistManagement from "@/page/admin/waitlistManagement";
 
@@ -27,7 +26,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route path="menu" element={<MenuManagement />} />
           <Route path="orders" element={<OrderQueue />} />
-          <Route path="tables" element={<TableManagement />} />
+          <Route path="tables" element={<TableManagementWithActive />} />
           <Route path="billing" element={<BillingManagement />} />
           <Route path="waitlist" element={<WaitlistManagement />} />
           <Route index element={<MenuManagement />} /> {/* Default admin page */}
@@ -38,7 +37,6 @@ function App() {
           <Route index element={<Home />} />
           <Route path="menu" element={<MenuPage />} />
           <Route path="cart" element={<CartPage />} />
-          <Route path="profile" element={<ProfilePage />} />
           <Route path="table" element={<ReservationPage />} />
           <Route path="reservation" element={<ReservationPage />} />
           {/* Support both /:tableId and /:tableId/order for compatibility */}

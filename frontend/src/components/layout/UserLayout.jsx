@@ -2,14 +2,16 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom"; // ใช้ NavLink เพื่อแสดงสถานะ Active
 
 import background from "@/assets/background.png"; // สมมติว่าใช้ภาพพื้นหลังเดียวกัน
+import { useBilingual } from "@/hook/useBilingual";
 
 const UserLayout = () => {
+  const { language, toggleLanguage, t } = useBilingual();
+
   // 1. กำหนดรายการเมนูสำหรับผู้ใช้
   const userMenuItems = [
-    { name: "หน้าหลัก", path: "/" },
-    { name: "เมนูอาหาร", path: "/menu" },
-    { name: "ตะกร้า", path: "/cart" },
-    { name: "โปรไฟล์", path: "/profile" },
+    { name: t("nav.home"), path: "/" },
+    { name: t("nav.menu"), path: "/menu" },
+    { name: t("nav.cart"), path: "/cart" },
   ];
 
   return (
@@ -22,7 +24,7 @@ const UserLayout = () => {
       <div className="relative z-10">
         <nav className="bg-black backdrop-blur-sm text-red-900 shadow-lg">
           <div className="container mx-auto flex items-center justify-between px-4 py-3 md:p-4">
-            <div className="text-2xl font-bold text-red-700">MooMoo E-Menu</div>
+            <div className="text-2xl font-bold text-red-700">{t("app.name")}</div>
 
             <div className="flex items-center space-x-4 md:space-x-6">
               {userMenuItems.map((item) => (
@@ -38,7 +40,6 @@ const UserLayout = () => {
                   {item.name}
                 </NavLink>
               ))}
-
 
               <NavLink
                 to="/admin" 

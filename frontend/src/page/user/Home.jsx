@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, MapPin, Phone, Star, ChefHat, Flame } from "lucide-react";
+import { useBilingual } from '@/hook/useBilingual';
 
 function Home() {
   const navigate = useNavigate();
+  const { isThai } = useBilingual();
+  const [tableNumber, setTableNumber] = useState('');
 
   return (
     <div className="min-h-screen bg-black">
@@ -28,19 +31,51 @@ function Home() {
             moomoo
           </h1>
           <p className="text-xl md:text-2xl text-red-400 font-serif mb-2">
-            Moo Kra Ta
+            บุฟเฟ่ต์หมูกระทะ
           </p>
           <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-            ประสบการณ์รสชาติดั้งเดิมที่ผสมผสานกับความทันสมัย
-            Authentic Thai BBQ & Hotpot Experience
+            ทานไม่อั้น! เนื้อสด ผักสด วัตถุดิบคุณภาพ ในราคาคุ้มค่า
+            All You Can Eat Thai BBQ & Hotpot Buffet
           </p>
+          
+          {/* Table Number Entry */}
+          <div className="max-w-md mx-auto mb-6">
+            <div className="bg-black/50 backdrop-blur-md rounded-lg p-6 border border-red-600/30">
+              <label className="block text-white text-lg font-semibold mb-3 text-center">
+                {isThai ? 'กรุณาระบุหมายเลขโต๊ะของคุณ' : 'Enter Your Table Number'}
+              </label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={tableNumber}
+                  onChange={(e) => setTableNumber(e.target.value)}
+                  placeholder={isThai ? 'โต๊ะที่ 1-10' : 'Table 1-10'}
+                  className="flex-1 px-4 py-3 bg-gray-900 text-white border border-red-600/50 rounded-lg focus:outline-none focus:border-red-600 text-center text-xl font-bold"
+                />
+                <button
+                  onClick={() => {
+                    const num = parseInt(tableNumber);
+                    if (num >= 1 && num <= 10) {
+                      localStorage.setItem('tableNumber', tableNumber);
+                      navigate('/menu');
+                    } else {
+                      alert(isThai ? 'กรุณาระบุโต๊ะที่ 1-10' : 'Please enter table 1-10');
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                >
+                  {isThai ? 'เริ่มสั่ง' : 'Start'}
+                </button>
+              </div>
+              <p className="text-gray-400 text-sm mt-3 text-center">
+                {isThai ? 'หมายเลขโต๊ะอยู่บนแผ่นป้ายที่โต๊ะของคุณ' : 'Table number is on the sign at your table'}
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => navigate('/table')}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-red-600/50"
-            >
-              จองโต๊ะ / Reserve Table
-            </button>
             <button
               onClick={() => navigate('/menu')}
               className="border-2 border-red-600 text-red-400 hover:bg-red-600 hover:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300"
@@ -155,14 +190,14 @@ function Home() {
       <section className="py-20 px-4 bg-gradient-to-b from-black to-gray-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-serif font-bold text-white mb-8">เกี่ยวกับเรา</h2>
-          <p className="text-xl text-red-400 font-serif mb-8">About Moo Kra Ta</p>
+          <p className="text-xl text-red-400 font-serif mb-8">About บุฟเฟ่ต์หมูกระทะ</p>
           <p className="text-gray-300 leading-relaxed text-lg mb-8">
-            หมูกระทะคือประสบการณ์การทานอาหารแบบดั้งเดิมของไทยที่ผสมผสานกับสไตล์การนำเสนอที่ทันสมัย
+            บุฟเฟ่ต์หมูกระทะคือประสบการณ์การทานอาหารแบบดั้งเดิมของไทยที่ผสมผสานกับสไตล์การนำเสนอที่ทันสมัย
             เราให้ความสำคัญกับการเลือกวัตถุดิบคุณภาพดีและการรักษารสชาติดั้งเดิมไว้ให้ครบถ้วน
             เพื่อมอบประสบการณ์ที่ดีที่สุดให้กับลูกค้าทุกท่าน
           </p>
           <p className="text-red-400 text-base">
-            Moo Kra Ta brings you the authentic Thai BBQ experience with a modern presentation.
+            บุฟเฟ่ต์หมูกระทะ brings you the authentic Thai BBQ experience with a modern presentation.
             We prioritize quality ingredients and traditional flavors to deliver the best dining experience.
           </p>
         </div>
@@ -204,15 +239,6 @@ function Home() {
               <p className="text-red-400 text-sm mt-2">Reservation recommended</p>
             </div>
           </div>
-
-          <div className="text-center mt-12">
-            <button
-              onClick={() => navigate('/table')}
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              จองโต๊ะตอนนี้ / Book Now
-            </button>
-          </div>
         </div>
       </section>
 
@@ -221,10 +247,10 @@ function Home() {
         <div className="max-w-6xl mx-auto text-center">
           <div className="mb-6">
             <h3 className="text-2xl font-serif font-bold text-white mb-2">moomoo</h3>
-            <p className="text-red-400 font-serif">Moo Kra Ta</p>
+            <p className="text-red-400 font-serif">บุฟเฟ่ต์หมูกระทะ</p>
           </div>
           <p className="text-gray-500 text-sm">
-            © 2024 Moo Kra Ta. All rights reserved. | สงวนลิขสิทธิ์ พ.ศ. 2567
+            © 2024 บุฟเฟ่ต์หมูกระทะ. All rights reserved. | สงวนลิขสิทธิ์ พ.ศ. 2567
           </p>
         </div>
       </footer>
