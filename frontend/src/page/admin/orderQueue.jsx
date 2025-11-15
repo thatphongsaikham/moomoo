@@ -6,6 +6,16 @@ import { ShoppingCart, Clock, TrendingUp, AlertCircle, Flame, RefreshCw } from "
 export default function OrderQueue() {
   const { orders, loading, completeOrder } = useOrderService();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [error, setError] = useState(null);
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      await completeOrder(orderId);
+    } catch (error) {
+      setError(error.message);
+      setTimeout(() => setError(null), 3000);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -102,6 +112,19 @@ export default function OrderQueue() {
         </div>
       )}
 
+      {/* Error Alert */}
+      {error && (
+        <div className="bg-red-600/20 border border-red-600/30 rounded-xl p-4 mb-8">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+            <div>
+              <p className="text-red-400 font-semibold">เกิดข้อผิดพลาด</p>
+              <p className="text-gray-400 text-sm">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Order Lists */}
       <div className="grid md:grid-cols-2 gap-8">
         <OrderList
@@ -109,14 +132,14 @@ export default function OrderQueue() {
           titleEn="Standard Queue"
           color="red"
           orders={normalOrders}
-          onComplete={completeOrder}
+          onComplete={handleCompleteOrder}
         />
         <OrderList
           title="คิวเมนูพิเศษ"
           titleEn="Special Queue"
           color="yellow"
           orders={specialOrders}
-          onComplete={completeOrder}
+          onComplete={handleCompleteOrder}
         />
       </div>
 

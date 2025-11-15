@@ -122,17 +122,44 @@ function OrderPage() {
 
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
-  const submitOrder = () => {
+  const submitOrder = async () => {
     if (cart.length === 0) return;
-    // Dispatch custom event so other parts (or backend integration) can listen
+    
     try {
-      window.dispatchEvent(new CustomEvent('moomoo:place-order', { detail: { tableId, items: cart } }));
-    } catch (e) {
-      // ignore
+      // Prepare order data
+      const orderData = {
+        tableId: tableId,
+        menuType: cart.some(item => item.price > 0) ? 'special' : 'normal',
+        items: cart.map(item => ({
+          menuId: String(item.id),
+          name: item.name,
+          qty: item.qty,
+          price: item.price,
+          note: ''
+        }))
+      };
+
+      // Send order to backend
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit order');
+      }
+
+      // Success - show notification and clear cart
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 2000);
+      setCart([]);
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert('เกิดข้อผิดพลาดในการส่งออเดอร์ กรุณาลองใหม่อีกครั้ง');
     }
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 2000);
-    setCart([]);
   };
 
   return (

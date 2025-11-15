@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import orderRoutes from "./routes/orderRoutes.js";
+import menuRoutes from "./routes/menuRoutes.js";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/orders", orderRoutes);
+app.use("/api/menu", menuRoutes);
 
 // Connect to MongoDB
 mongoose

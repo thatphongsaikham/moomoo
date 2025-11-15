@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, Users, Plus, Minus, Loader2 } from 'lucide-react';
+import { Flame, Users, Plus, Minus, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import menuService from '../../services/menuService';
 
 function MenuPage() {
@@ -8,6 +8,7 @@ function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [quantities, setQuantities] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [menuData, setMenuData] = useState({
     standard: [],
     premium: [],
@@ -16,41 +17,56 @@ function MenuPage() {
   const [categories, setCategories] = useState([]);
 
   // Load menu data from API
+  const loadMenuData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Load categories
+      const categoriesData = await menuService.getCategories();
+      setCategories(categoriesData);
+
+      // Load all menu items from API
+      const allMenuItems = await menuService.getAllMenuItems();
+
+      // Categorize items based on their properties
+      const standardItems = allMenuItems.filter(item =>
+        item.tier === 'standard' && !item.isSpecial
+      );
+      const premiumItems = allMenuItems.filter(item =>
+        item.tier === 'premium' && !item.isSpecial
+      );
+      const specialItems = allMenuItems.filter(item =>
+        item.isSpecial || item.price > 0
+      );
+
+      setMenuData({
+        standard: standardItems,
+        premium: premiumItems,
+        special: specialItems
+      });
+
+    } catch (error) {
+      console.error('Failed to load menu data:', error);
+      setError(error.message || 'Failed to load menu data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    loadMenuData();
+  };
+
   useEffect(() => {
-    const loadMenuData = async () => {
-      try {
-        setLoading(true);
-
-        // Load categories
-        const categoriesData = await menuService.getCategories();
-        setCategories(categoriesData);
-
-        // Load special items
-        const specialItems = menuService.getMockSpecialItems(); // Use mock for now
-
-        // Get menu by tiers
-        const standardMenu = menuService.getMockMenuByTier(259);
-        const premiumMenu = menuService.getMockMenuByTier(299);
-
-        setMenuData({
-          standard: standardMenu.standard,
-          premium: premiumMenu.premium,
-          special: specialItems
-        });
-
-      } catch (error) {
-        console.error('Failed to load menu data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadMenuData();
   }, []);
 
   const getAllItems = () => {
     return [...menuData.standard, ...menuData.premium, ...menuData.special];
   };
+
+  const hasMenuItems = getAllItems().length > 0;
 
   const filteredItems = () => {
     const allItems = getAllItems();
@@ -108,6 +124,26 @@ function MenuPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-6">
+          <AlertTriangle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h2>
+          <p className="text-red-400 text-lg mb-2">Connection Error</p>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button
+            onClick={handleRetry}
+            className="flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 mx-auto"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            ลองใหม่ / Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black">
       {/* Hero Section */}
@@ -131,6 +167,13 @@ function MenuPage() {
           <p className="text-gray-300 max-w-2xl mx-auto text-lg">
             สดใหม่ อร่อย ครบครัน พร้อมสัมผัสรสชาติดั้งเดิมที่คุณจะต้องประทับใจ
           </p>
+          <button
+            onClick={handleRetry}
+            className="mt-4 flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-all duration-300 mx-auto"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            รีเฟรชเมนู
+          </button>
         </div>
       </section>
 
@@ -209,12 +252,13 @@ function MenuPage() {
           {/* Menu Items Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredItems().map((item) => {
-              const quantity = quantities[item.id] || 0;
+              const itemId = item._id || item.id;
+              const quantity = quantities[itemId] || 0;
               const isPaid = item.price > 0;
 
               return (
                 <div
-                  key={item.id}
+                  key={itemId}
                   className="bg-gray-900 border border-red-600/20 rounded-xl p-6 hover:border-red-600/40 transition-all duration-300 group"
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -242,14 +286,14 @@ function MenuPage() {
                       <span className="text-lg font-bold text-white">฿{item.price}</span>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateQuantity(item.id, -1)}
+                          onClick={() => updateQuantity(itemId, -1)}
                           className="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-colors"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="text-white font-semibold w-8 text-center">{quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, 1)}
+                          onClick={() => updateQuantity(itemId, 1)}
                           className="w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-colors"
                         >
                           <Plus className="w-4 h-4" />
@@ -264,8 +308,18 @@ function MenuPage() {
 
           {filteredItems().length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">ไม่พบรายการอาหารในหมวดนี้</p>
-              <p className="text-gray-500 text-sm mt-2">No items found in this category</p>
+              {hasMenuItems ? (
+                <>
+                  <p className="text-gray-400 text-lg">ไม่พบรายการอาหารในหมวดนี้</p>
+                  <p className="text-gray-500 text-sm mt-2">No items found in this category</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-400 text-lg">ยังไม่มีรายการอาหารในระบบ</p>
+                  <p className="text-gray-500 text-sm mt-2">No menu items available</p>
+                  <p className="text-gray-600 text-sm mt-4">กรุณารอแอดมินเพิ่มเมนู หรือลองรีเฟรชหน้านี้อีกครั้ง</p>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -282,11 +336,12 @@ function MenuPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {menuData.special.map((item) => {
-              const quantity = quantities[item.id] || 0;
+              const itemId = item._id || item.id;
+              const quantity = quantities[itemId] || 0;
 
               return (
                 <div
-                  key={item.id}
+                  key={itemId}
                   className="bg-gray-900/50 border border-yellow-600/30 rounded-xl p-6 hover:border-yellow-600/50 transition-all duration-300"
                 >
                   <div className="flex justify-between items-center mb-3">
@@ -306,14 +361,14 @@ function MenuPage() {
                     </span>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => updateQuantity(itemId, -1)}
                         className="w-8 h-8 bg-gray-700 hover:bg-gray-600 text-white rounded-full flex items-center justify-center transition-colors"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="text-white font-semibold w-8 text-center">{quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => updateQuantity(itemId, 1)}
                         className="w-8 h-8 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full flex items-center justify-center transition-colors"
                       >
                         <Plus className="w-4 h-4" />

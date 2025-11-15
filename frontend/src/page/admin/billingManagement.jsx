@@ -1,20 +1,7 @@
 import React, { useState } from 'react';
 
-const initialBill = {
-  id: 1,
-  tableId: 2,
-  items: [
-    { name: 'Moo Ping Skewers', quantity: 4, price: 3.0 },
-    { name: 'Grilled Prawns', quantity: 2, price: 9.0 },
-    { name: 'Mixed Veggie Platter', quantity: 1, price: 8.0 },
-    { name: 'Peanut Sauce', quantity: 1, price: 2.0 }
-  ],
-  status: 'pending',
-  timestamp: new Date()
-};
-
 function BillingManagement() {
-  const [bills, setBills] = useState([initialBill]);
+  const [bills, setBills] = useState([]);
 
   const completeBill = (billId) => {
     setBills(

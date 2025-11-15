@@ -14,47 +14,7 @@ function TableManagement() {
   };
 
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [tables, setTables] = useState([
-    {
-      id: 1,
-      timeLeft: '01:30:00',
-      status: 'active',
-      people: 4,
-      buffetType: 'normal',
-      buffetTotal: 259 * 4,
-      specialOrderTotal: 590,
-      orders: {
-        special: ['เนื้อวากิว A5 x1 (590฿)'],
-        buffet: ['หมูสไลด์ x2 (ฟรี)', 'เนื้อสไลด์ x1 (ฟรี)', 'ข้าว x4 (ฟรี)']
-      }
-    },
-    {
-      id: 2,
-      timeLeft: '00:45:30',
-      status: 'requesting_bill',
-      people: 2,
-      buffetType: 'premium',
-      buffetTotal: 299 * 2,
-      specialOrderTotal: 0,
-      orders: {
-        special: [],
-        buffet: ['หมูสไลด์ x1 (ฟรี)', 'เนื้อสไลด์ x1 (ฟรี)', 'ข้าว x2 (ฟรี)']
-      }
-    },
-    {
-      id: 3,
-      timeLeft: '02:00:00',
-      status: 'active',
-      people: 6,
-      buffetType: 'premium',
-      buffetTotal: 299 * 6,
-      specialOrderTotal: 1180,
-      orders: {
-        special: ['เนื้อวากิว A5 x2 (1,180฿)'],
-        buffet: ['หมูสไลด์ x3 (ฟรี)', 'เนื้อสไลด์ x2 (ฟรี)', 'ข้าว x6 (ฟรี)']
-      }
-    },
-  ]);
+  const [tables, setTables] = useState([]);
 
   const [newTable, setNewTable] = useState({
     tableNumber: '',
