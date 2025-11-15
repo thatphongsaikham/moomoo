@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Clock, DollarSign, Plus, Filter } from 'lucide-react';
+import { Users, Clock, DollarSign, Plus, Filter, Copy, QrCode, Check } from 'lucide-react';
 import TableGrid from '../../components/table/TableGrid';
 import tableService from '../../services/tableService';
 import { useBilingual } from '../../hook/useBilingual';
@@ -11,6 +11,9 @@ function TableManagement() {
   const [showOpenDialog, setShowOpenDialog] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPINDialog, setShowPINDialog] = useState(false);
+  const [openedTableData, setOpenedTableData] = useState(null);
+  const [copiedField, setCopiedField] = useState(null);
 
   // Open table form state
   const [openForm, setOpenForm] = useState({
@@ -56,19 +59,44 @@ function TableManagement() {
     setLoading(true);
 
     try {
-      await tableService.openTable(
+      const response = await tableService.openTable(
         selectedTable,
         parseInt(openForm.customerCount),
         openForm.buffetTier
       );
-      alert(isThai ? `เปิดโต๊ะ ${selectedTable} สำเร็จ!` : `Table ${selectedTable} opened successfully!`);
+      
+      // Show PIN dialog with table data
+      setOpenedTableData({
+        tableNumber: selectedTable,
+        pin: response.data.pin,
+        encryptedId: response.data.encryptedId,
+        customerCount: response.data.customerCount,
+        buffetTier: response.data.buffetTier
+      });
       setShowOpenDialog(false);
+      setShowPINDialog(true);
       fetchTables();
     } catch (error) {
       alert(isThai ? 'เกิดข้อผิดพลาด: ' + error.message : 'Error: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Copy to clipboard
+   */
+  const copyToClipboard = (text, field) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  /**
+   * Get menu URL
+   */
+  const getMenuURL = (encryptedId) => {
+    return `${window.location.origin}/menu/${encryptedId}`;
   };
 
 
@@ -266,6 +294,110 @@ function TableManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Display Dialog */}
+      {showPINDialog && openedTableData && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl p-8 max-w-lg w-full border border-red-600/30">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
+                <Check className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-3xl font-bold text-white mb-2">
+                {isThai ? 'เปิดโต๊ะสำเร็จ!' : 'Table Opened!'}
+              </h3>
+              <p className="text-gray-400">
+                {isThai ? `โต๊ะที่ ${openedTableData.tableNumber}` : `Table ${openedTableData.tableNumber}`}
+              </p>
+            </div>
+
+            {/* PIN Display */}
+            <div className="bg-black/50 border border-red-600/30 rounded-xl p-6 mb-4">
+              <p className="text-gray-400 text-sm mb-2 text-center">
+                {isThai ? 'รหัส PIN สำหรับลูกค้า' : 'Customer PIN'}
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <div className="text-5xl font-bold text-red-600 tracking-widest">
+                  {openedTableData.pin}
+                </div>
+                <button
+                  onClick={() => copyToClipboard(openedTableData.pin, 'pin')}
+                  className="p-3 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  {copiedField === 'pin' ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Menu URL */}
+            <div className="bg-black/50 border border-red-600/30 rounded-xl p-4 mb-4">
+              <p className="text-gray-400 text-sm mb-2">
+                {isThai ? 'ลิงก์เมนู' : 'Menu Link'}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={getMenuURL(openedTableData.encryptedId)}
+                  readOnly
+                  className="flex-1 bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
+                />
+                <button
+                  onClick={() => copyToClipboard(getMenuURL(openedTableData.encryptedId), 'url')}
+                  className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  {copiedField === 'url' ? (
+                    <Check className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-blue-900/20 border border-blue-600/30 rounded-xl p-4 mb-6">
+              <p className="text-blue-300 text-sm leading-relaxed">
+                {isThai ? (
+                  <>
+                    <strong>วิธีใช้:</strong> ให้ลูกค้าเปิดหน้าเว็บ แล้วกรอกหมายเลขโต๊ะและรหัส PIN เพื่อเข้าสู่เมนู
+                  </>
+                ) : (
+                  <>
+                    <strong>Instructions:</strong> Customer opens the website, enters table number and PIN to access menu
+                  </>
+                )}
+              </p>
+            </div>
+
+            {/* Table Info */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="text-center">
+                <p className="text-gray-400 text-sm">{isThai ? 'จำนวนลูกค้า' : 'Customers'}</p>
+                <p className="text-white text-xl font-bold">{openedTableData.customerCount}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-sm">{isThai ? 'ประเภท' : 'Tier'}</p>
+                <p className="text-white text-xl font-bold">{openedTableData.buffetTier}</p>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                setShowPINDialog(false);
+                setOpenedTableData(null);
+              }}
+              className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              {isThai ? 'ปิด' : 'Close'}
+            </button>
           </div>
         </div>
       )}

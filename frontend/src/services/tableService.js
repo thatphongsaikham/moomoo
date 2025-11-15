@@ -69,6 +69,19 @@ export const closeTable = async (tableNumber) => {
   return response.data;
 };
 
+/**
+ * Verify PIN for a table
+ * @param {number} tableNumber - Table number (1-10)
+ * @param {string} pin - 4-digit PIN
+ * @returns {Promise} Response with verification result and encryptedId
+ */
+export const verifyPIN = async (tableNumber, pin) => {
+  const response = await api.post(`/tables/${tableNumber}/verify-pin`, {
+    pin,
+  });
+  return response.data;
+};
+
 export default {
   getTables,
   getTableByNumber,
@@ -76,4 +89,5 @@ export default {
   reserveTable,
   cancelReservation,
   closeTable,
+  verifyPIN,
 };

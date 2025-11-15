@@ -119,3 +119,31 @@ export const closeTable = asyncHandler(async (req, res) => {
     message: result.message,
   });
 });
+
+/**
+ * @route POST /api/tables/:tableNumber/verify-pin
+ * @desc Verify PIN for a table to get encrypted ID
+ * @access Public
+ */
+export const verifyPIN = asyncHandler(async (req, res) => {
+  const { tableNumber } = req.params;
+  const { pin } = req.body;
+
+  if (!pin) {
+    res.status(422);
+    throw new Error("PIN is required");
+  }
+
+  const result = await TableService.verifyPIN(parseInt(tableNumber), pin);
+
+  if (!result.valid) {
+    res.status(401);
+    throw new Error(result.message);
+  }
+
+  res.json({
+    success: true,
+    data: result,
+    message: result.message,
+  });
+});
