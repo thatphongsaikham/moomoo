@@ -1,8 +1,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+@import './styles/restaurant.css';
 
 body {
   font-family: 'Sarabun', sans-serif;
+}
+
+/* Enhance the existing font sizing with our custom styles */
+.font-serif {
+  font-family: 'Playfair Display', 'Sarabun', serif;
 }
 
 /* Reduce base font-size slightly on small screens so Tailwind rem-based sizes scale down
