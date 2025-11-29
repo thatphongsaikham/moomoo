@@ -23,12 +23,12 @@ function App() {
       <Routes>
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<MenuManagement />} /> {/* Default admin page */}
           <Route path="menu" element={<MenuManagement />} />
           <Route path="orders" element={<OrderQueue />} />
           <Route path="tables" element={<TableManagementWithActive />} />
           <Route path="billing" element={<BillingManagement />} />
           <Route path="waitlist" element={<WaitlistManagement />} />
-          <Route index element={<MenuManagement />} /> {/* Default admin page */}
         </Route>
 
         {/* User Routes */}

@@ -1,21 +1,36 @@
-import { menuItems } from "../data/menuData";
+// frontend/src/page/user/MenuPage.jsx
 
-function MenuPage() {
-  // เอาเฉพาะเมนูปกติ (isSpecial = false)
-  const normalMenu = menuItems.filter((item) => !item.isSpecial);
+import React from "react";
+// 👇 import เมนูจาก menudata.js (สังเกตว่าใช้ชื่อไฟล์ menudata ไม่ใช่ menuData)
+import { menu, specialMenu } from "../../data/menudata";
 
+const MenuPage = () => {
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1>Menu</h1>
-      <ul>
-        {normalMenu.map((item) => (
-          <li key={item.id} style={{ marginBottom: "0.5rem" }}>
-            <strong>{item.name}</strong> - {item.price}฿
-          </li>
+    <div style={{ padding: "20px" }}>
+      <h1>เมนูทั้งหมด</h1>
+
+      {/* เมนูบุฟเฟ่ต์ (ฟรี) */}
+      <section style={{ marginTop: "20px" }}>
+        <h2>เมนูบุฟเฟ่ต์</h2>
+        {menu.map((item) => (
+          <div key={item.id}>
+            {item.nameThai} ({item.nameEng})
+          </div>
         ))}
-      </ul>
+      </section>
+
+      {/* เมนูพิเศษ (คิดเงินเพิ่ม) */}
+      <section style={{ marginTop: "20px" }}>
+        <h2>Special Menu (คิดเงินเพิ่ม)</h2>
+        {specialMenu.map((item) => (
+          <div key={item.id}>
+            {item.nameThai} - {item.price} บาท
+          </div>
+        ))}
+      </section>
     </div>
   );
-}
+};
 
 export default MenuPage;
+

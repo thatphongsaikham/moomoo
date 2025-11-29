@@ -4,23 +4,63 @@ const menuData = [
   {
     category: "Menu",
     items: [
-      { name: "ชุดหมูกระทะมาตรฐาน", price: 259, desc: "หมูสไลซ์, เบคอน, ไก่หมัก, ผักรวม" },
-      { name: "ชุดหมูกระทะพรีเมียม", price: 299, desc: "เนื้อวัวสไลซ์, หมูสามชั้น, กุ้ง, ปลาหมึก" },
-      { name: "ชุดซีฟู้ดเลิฟเวอร์", price: 329, desc: "กุ้ง, ปลาหมึก, หอยแมลงภู่, ปลาชิ้น" },
-      { name: "ชุดหมูรวมมิตร", price: 249, desc: "หมูสไลซ์, หมูสามชั้น, หมูหมัก, ไส้กรอก" },
-      { name: "ชุดสายผักเฮลตี้", price: 219, desc: "ผักรวม, เต้าหู้, เห็ด, วุ้นเส้น" },
-      { name: "ชุดเด็กน้อย", price: 199, desc: "ไส้กรอก, นักเก็ต, หมูหมัก, วุ้นเส้น" },
+      {
+        name: "ชุดหมูกระทะมาตรฐาน",
+        price: 259,
+        description: "หมูสไลซ์, เบคอน, ไก่หมัก, ผักรวม",
+      },
+      {
+        name: "ชุดหมูกระทะพรีเมียม",
+        price: 299,
+        description: "เนื้อวัวสไลซ์, หมูสามชั้น, กุ้ง, ปลาหมึก",
+      },
+      {
+        name: "ชุดซีฟู้ดเลิฟเวอร์",
+        price: 329,
+        description: "กุ้ง, ปลาหมึก, หอยแมลงภู่, ปลาชิ้น",
+      },
+      {
+        name: "ชุดหมูรวมมิตร",
+        price: 249,
+        description: "หมูสไลซ์, หมูสามชั้น, หมูหมัก, ไส้กรอก",
+      },
+      {
+        name: "ชุดสายผักเฮลตี้",
+        price: 219,
+        description: "ผักรวม, เต้าหู้, เห็ด, วุ้นเส้น",
+      },
+      {
+        name: "ชุดเด็กน้อย",
+        price: 199,
+        description: "ไส้กรอก, นักเก็ต, หมูหมัก, วุ้นเส้น",
+      },
     ],
   },
   {
-    category: "Special menu",
+    category: "Special Menu", // ใช้ชื่อเดียวกับ backend enum
     items: [
-      { name: "เนื้อวากิวสไลซ์", price: 89, desc: "เพิ่มได้ต่อจาน" },
-      { name: "ชีสเยิ้มลาวา", price: 49, desc: "ชีสหม้อไฟสำหรับจิ้ม" },
-      { name: "กุ้งแม่น้ำตัวโต", price: 129, desc: "เพิ่มกุ้งแม่น้ำพิเศษ" },
-      { name: "ชุดหม้อไฟต้มยำ", price: 79, desc: "น้ำซุปต้มยำ + เครื่องต้มยำ" },
-      { name: "ชีสบอลทอดกรอบ", price: 59, desc: "ของทานเล่นสำหรับเพิ่ม" },
-      { name: "ไอศกรีมไม่อั้น", price: 39, desc: "ท็อปปิงกินได้ไม่จำกัด" },
+      { name: "เนื้อวากิวสไลซ์", price: 89, description: "เพิ่มได้ต่อจาน" },
+      { name: "ชีสเยิ้มลาวา", price: 49, description: "ชีสหม้อไฟสำหรับจิ้ม" },
+      {
+        name: "กุ้งแม่น้ำตัวโต",
+        price: 129,
+        description: "เพิ่มกุ้งแม่น้ำพิเศษ",
+      },
+      {
+        name: "ชุดหม้อไฟต้มยำ",
+        price: 79,
+        description: "น้ำซุปต้มยำ + เครื่องต้มยำ",
+      },
+      {
+        name: "ชีสบอลทอดกรอบ",
+        price: 59,
+        description: "ของทานเล่นสำหรับเพิ่ม",
+      },
+      {
+        name: "ไอศกรีมไม่อั้น",
+        price: 39,
+        description: "ท็อปปิงกินได้ไม่จำกัด",
+      },
     ],
   },
 ];
@@ -45,17 +85,17 @@ export default function FullMenuSection() {
         </button>
         <button
           className={`px-4 py-2 rounded ${
-            activeCategory === "Special menu" ? "bg-red-600" : "bg-gray-600"
+            activeCategory === "Special Menu" ? "bg-red-600" : "bg-gray-600"
           }`}
-          onClick={() => setActiveCategory("Special menu")}
+          onClick={() => setActiveCategory("Special Menu")}
         >
-          Special menu
+          Special Menu
         </button>
       </div>
 
       {/* รายการเมนู */}
       <div className="grid md:grid-cols-2 gap-5 px-4">
-        {activeMenu.items.map((item, idx) => (
+        {activeMenu?.items.map((item, idx) => (
           <div
             key={idx}
             className="border border-red-500 p-4 rounded-lg bg-[#0f1220]"
@@ -64,8 +104,10 @@ export default function FullMenuSection() {
               <span>{item.name}</span>
               <span>฿{item.price}</span>
             </div>
-            {item.desc && (
-              <p className="text-sm text-gray-300 mt-2">{item.desc}</p>
+            {item.description && (
+              <p className="text-sm text-gray-300 mt-2">
+                {item.description}
+              </p>
             )}
           </div>
         ))}
@@ -73,4 +115,3 @@ export default function FullMenuSection() {
     </section>
   );
 }
-

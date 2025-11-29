@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import tableRoutes from "./routes/tableRoutes.js";
 import billRoutes from "./routes/billRoutes.js";
 import menuRoutes from "./routes/menuRoutes.js";
+import reservationRoutes from "./routes/reservationRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import TimerService from "./services/TimerService.js";
 
@@ -62,6 +63,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/reservations", reservationRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

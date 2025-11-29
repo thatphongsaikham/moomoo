@@ -1,32 +1,54 @@
-import React from 'react';
-import { Plus, Minus } from 'lucide-react';
-import { useBilingual } from '@/hook/useBilingual';
+import React from "react";
+import { Plus, Minus } from "lucide-react";
+import { useBilingual } from "@/hook/useBilingual";
 
 /**
- * MenuItemCard - Display individual menu item with bilingual support
- * @param {Object} item - Menu item object
- * @param {Number} quantity - Current quantity in cart
- * @param {Function} onAdd - Callback when add button clicked
- * @param {Function} onRemove - Callback when remove button clicked
+ * MenuItemCard - Display individual menu item
+ * item model (ใหม่):
+ * {
+ *   name: string,
+ *   price: number,
+ *   description?: string,
+ *   availability?: "Available" | "Out of Stock",
+ *   category?: string
+ * }
  */
-const MenuItemCard = ({ item, quantity = 0, onAdd, onRemove }) => {
+const MenuItemCard = ({
+  item,
+  quantity = 0,
+  onAdd,
+  onRemove,
+  category, // ถ้า parent ส่ง category มา จะใช้ค่านี้ก่อน
+}) => {
   const { isThai } = useBilingual();
 
-  // Get display name based on language
-  const displayName = isThai ? item.nameThai : item.nameEnglish;
-  const displayDescription = isThai ? item.descriptionThai : item.descriptionEnglish;
+  // ใช้ name เดียวแล้ว ไม่แยกไทย/อังกฤษ
+  const displayName = item.name;
+  const displayDescription = item.description || "";
 
-  // Check if item is available
-  const isAvailable = item.availability === 'Available';
-  const isFree = item.price === 0;
+  // category สำหรับ badge (พยายามรองรับทั้งของใหม่/เก่า)
+  const displayCategory =
+    category || item.category || (isThai ? "เมนู" : "Menu");
+
+  // ถ้าไม่มีฟิลด์ availability ให้ถือว่า Available
+  const isAvailable =
+    item.availability != null ? item.availability === "Available" : true;
+
+  const isFree = !item.price || item.price === 0;
+
+  // สี badge ตาม category แบบง่าย ๆ
+  const categoryClass =
+    displayCategory === "Special menu" || displayCategory === "Special Menu"
+      ? "bg-red-100 text-red-800"
+      : "bg-green-100 text-green-800";
 
   return (
     <div
       className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 ${
-        !isAvailable ? 'opacity-60' : 'hover:shadow-lg'
+        !isAvailable ? "opacity-60" : "hover:shadow-lg"
       }`}
     >
-      {/* Item Image */}
+      {/* ถ้ายังมี imageUrl อยู่ก็ใช้ต่อได้ ถ้าไม่มีจะไม่แสดงอะไร */}
       {item.imageUrl && (
         <div className="h-48 overflow-hidden bg-gray-200">
           <img
@@ -42,20 +64,16 @@ const MenuItemCard = ({ item, quantity = 0, onAdd, onRemove }) => {
         {/* Category Badge */}
         <div className="mb-2">
           <span
-            className={`inline-block px-2 py-1 text-xs font-semibold rounded ${
-              item.category === 'Special Menu'
-                ? 'bg-red-100 text-red-800'
-                : item.category === 'Premium Buffet'
-                ? 'bg-purple-100 text-purple-800'
-                : 'bg-green-100 text-green-800'
-            }`}
+            className={`inline-block px-2 py-1 text-xs font-semibold rounded ${categoryClass}`}
           >
-            {item.category}
+            {displayCategory}
           </span>
         </div>
 
         {/* Item Name */}
-        <h3 className="text-lg font-bold text-gray-800 mb-1">{displayName}</h3>
+        <h3 className="text-lg font-bold text-gray-800 mb-1">
+          {displayName}
+        </h3>
 
         {/* Item Description */}
         {displayDescription && (
@@ -70,11 +88,11 @@ const MenuItemCard = ({ item, quantity = 0, onAdd, onRemove }) => {
           <div className="flex flex-col">
             {isFree ? (
               <span className="text-lg font-bold text-green-600">
-                {isThai ? 'ฟรี' : 'Free'}
+                {isThai ? "ฟรี" : "Free"}
               </span>
             ) : (
               <span className="text-lg font-bold text-red-600">
-                ฿{item.price.toFixed(0)}
+                ฿{Number(item.price).toFixed(0)}
               </span>
             )}
           </div>
@@ -106,7 +124,7 @@ const MenuItemCard = ({ item, quantity = 0, onAdd, onRemove }) => {
             </div>
           ) : (
             <span className="text-sm font-semibold text-gray-500">
-              {isThai ? 'หมด' : 'Out of Stock'}
+              {isThai ? "หมด" : "Out of Stock"}
             </span>
           )}
         </div>
