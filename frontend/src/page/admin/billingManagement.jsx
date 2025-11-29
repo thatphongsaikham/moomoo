@@ -119,10 +119,10 @@ function BillingManagement() {
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold font-serif mb-1 md:mb-2">
-          💵 {isThai ? 'จัดการบิล' : 'Billing Management'}
+          💵 จัดการบิล
         </h1>
         <p className="text-gray-400 text-sm md:text-base">
-          {isThai ? 'ดูบิลและประวัติการชำระเงิน' : 'View bills and payment history'}
+          ดูบิลและประวัติการชำระเงิน
         </p>
       </div>
 
@@ -138,7 +138,7 @@ function BillingManagement() {
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>{isThai ? 'บิลที่เปิด' : 'Active'}</span>
+            <span>บิลที่เปิด</span>
             <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs">{tables.length}</span>
           </button>
           <button
@@ -150,7 +150,7 @@ function BillingManagement() {
             }`}
           >
             <History className="w-4 h-4" />
-            <span>{isThai ? 'ประวัติ' : 'History'}</span>
+            <span>ประวัติ</span>
           </button>
         </div>
       </div>
@@ -165,8 +165,8 @@ function BillingManagement() {
                 <FileText className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
               </div>
               <div>
-                <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'โต๊ะที่เปิด' : 'Open Tables'}</p>
-                <p className="text-xl md:text-2xl font-bold text-green-400">{tables.length} <span className="text-sm md:text-base text-gray-400">{isThai ? 'โต๊ะ' : 'tables'}</span></p>
+                <p className="text-gray-400 text-xs md:text-sm">โต๊ะที่เปิด</p>
+                <p className="text-xl md:text-2xl font-bold text-green-400">{tables.length} <span className="text-sm md:text-base text-gray-400">โต๊ะ</span></p>
               </div>
             </div>
             <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-blue-600/30 flex items-center gap-3 md:gap-4">
@@ -174,8 +174,8 @@ function BillingManagement() {
                 <DollarSign className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
               </div>
               <div>
-                <p className="text-gray-400 text-xs md:text-sm">{isThai ? 'บิลรอชำระ' : 'Pending Bills'}</p>
-                <p className="text-xl md:text-2xl font-bold text-blue-400">{tables.length} <span className="text-sm md:text-base text-gray-400">{isThai ? 'บิล' : 'bills'}</span></p>
+                <p className="text-gray-400 text-xs md:text-sm">บิลรอชำระ</p>
+                <p className="text-xl md:text-2xl font-bold text-blue-400">{tables.length} <span className="text-sm md:text-base text-gray-400">บิล</span></p>
               </div>
             </div>
           </div>
@@ -185,7 +185,7 @@ function BillingManagement() {
             <div className="bg-gray-800/40 rounded-xl border border-gray-700 p-12 text-center">
               <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg">
-                {isThai ? 'ไม่มีโต๊ะที่เปิดอยู่' : 'No open tables'}
+                ไม่มีโต๊ะที่เปิดอยู่
               </p>
             </div>
           ) : (
@@ -199,10 +199,10 @@ function BillingManagement() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-xl md:text-2xl font-bold text-white">
-                        {isThai ? 'โต๊ะ' : 'Table'} {table.tableNumber}
+                        โต๊ะ {table.tableNumber}
                       </h3>
                       <p className="text-sm text-gray-400 mt-1">
-                        {table.customerCount} {isThai ? 'ท่าน' : 'guests'}
+                        {table.customerCount} ท่าน
                       </p>
                     </div>
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
@@ -210,17 +210,14 @@ function BillingManagement() {
                         ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-600/30' 
                         : 'bg-gray-700 text-gray-300'
                     }`}>
-                      {table.buffetTier === 'Starter'
-                        ? isThai ? 'ธรรมดา' : 'Starter'
-                        : isThai ? 'พรีเมียม' : 'Premium'
-                      }
+                      {table.buffetTier === 'Starter' ? 'ธรรมดา' : 'พรีเมียม'}
                     </span>
                   </div>
 
                   {/* Table Info */}
                   <div className="bg-gray-900/30 rounded-lg p-3 mb-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">{isThai ? 'เปิดเมื่อ' : 'Opened'}</span>
+                      <span className="text-gray-400">เปิดเมื่อ</span>
                       <span className="text-white font-mono">
                         {new Date(table.openedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
                       </span>
@@ -234,7 +231,7 @@ function BillingManagement() {
                     className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     <FileText className="w-4 h-4" />
-                    {loading ? (isThai ? 'กำลังโหลด...' : 'Loading...') : (isThai ? 'ดูบิล' : 'View Bill')}
+                    {loading ? 'กำลังโหลด...' : 'ดูบิล'}
                   </button>
                 </div>
               ))}
@@ -246,18 +243,18 @@ function BillingManagement() {
       {/* Historical Bills Tab */}
       {activeTab === 'history' && (
         <div className="bg-gray-800/40 rounded-xl border border-gray-700 p-4 md:p-6">
-          <h2 className="text-lg md:text-xl font-bold mb-4">📋 {isThai ? 'ประวัติบิล' : 'Bill History'}</h2>
+          <h2 className="text-lg md:text-xl font-bold mb-4">📋 ประวัติบิล</h2>
           
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-400">{isThai ? 'กำลังโหลด...' : 'Loading...'}</p>
+              <p className="text-gray-400">กำลังโหลด...</p>
             </div>
           ) : historicalBills.length === 0 ? (
             <div className="text-center py-12">
               <History className="w-16 h-16 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg">
-                {isThai ? 'ไม่พบประวัติบิล' : 'No historical bills found'}
+                ไม่พบประวัติบิล
               </p>
             </div>
           ) : (
@@ -272,14 +269,14 @@ function BillingManagement() {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-lg font-bold text-white">
-                          {isThai ? 'โต๊ะ' : 'Table'} {bill.tableNumber}
+                          โต๊ะ {bill.tableNumber}
                         </h3>
                         <p className="text-xs text-gray-400 mt-1">
-                          {bill.customerCount} {isThai ? 'ท่าน' : 'guests'} • {bill.buffetTier}
+                          {bill.customerCount} ท่าน • {bill.buffetTier === 'Starter' ? 'ธรรมดา' : 'พรีเมียม'}
                         </p>
                       </div>
                       <span className="px-2 py-1 rounded-lg bg-green-900/50 border border-green-600/30 text-green-400 text-xs font-medium">
-                        {isThai ? 'ชำระแล้ว' : 'Paid'}
+                        ชำระแล้ว
                       </span>
                     </div>
                     
@@ -304,7 +301,7 @@ function BillingManagement() {
                       }}
                       className="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
                     >
-                      {isThai ? 'ดูรายละเอียด' : 'View Details'}
+                      ดูรายละเอียด
                     </button>
                   </div>
                 ))}
@@ -315,11 +312,11 @@ function BillingManagement() {
                 <table className="w-full text-sm">
                   <thead className="bg-gray-900/50 border-b border-gray-700">
                     <tr>
-                      <th className="text-left px-4 py-3 text-gray-300">{isThai ? 'โต๊ะ' : 'Table'}</th>
-                      <th className="text-left px-4 py-3 text-gray-300">{isThai ? 'ลูกค้า' : 'Guests'}</th>
-                      <th className="text-left px-4 py-3 text-gray-300">{isThai ? 'ประเภท' : 'Tier'}</th>
-                      <th className="text-left px-4 py-3 text-gray-300">{isThai ? 'วันที่ปิด' : 'Closed'}</th>
-                      <th className="text-right px-4 py-3 text-gray-300">{isThai ? 'ยอดรวม' : 'Total'}</th>
+                      <th className="text-left px-4 py-3 text-gray-300">โต๊ะ</th>
+                      <th className="text-left px-4 py-3 text-gray-300">ลูกค้า</th>
+                      <th className="text-left px-4 py-3 text-gray-300">ประเภท</th>
+                      <th className="text-left px-4 py-3 text-gray-300">วันที่ปิด</th>
+                      <th className="text-right px-4 py-3 text-gray-300">ยอดรวม</th>
                       <th className="text-center px-4 py-3 text-gray-300"></th>
                     </tr>
                   </thead>
@@ -327,10 +324,10 @@ function BillingManagement() {
                     {historicalBills.map((bill) => (
                       <tr key={bill._id} className="hover:bg-gray-700/30 transition-colors">
                         <td className="px-4 py-3 font-medium text-white">
-                          {isThai ? 'โต๊ะ' : 'Table'} {bill.tableNumber}
+                          โต๊ะ {bill.tableNumber}
                         </td>
                         <td className="px-4 py-3 text-gray-300">
-                          {bill.customerCount} {isThai ? 'ท่าน' : 'guests'}
+                          {bill.customerCount} ท่าน
                         </td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -363,7 +360,7 @@ function BillingManagement() {
                             }}
                             className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
                           >
-                            {isThai ? 'ดู' : 'View'}
+                            ดู
                           </button>
                         </td>
                       </tr>
@@ -398,7 +395,7 @@ function BillingManagement() {
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-gray-800">
-                {isThai ? 'ตัวอย่างบิล' : 'Bill Preview'}
+                ตัวอย่างบิล
               </h3>
               <button
                 onClick={() => {
@@ -416,7 +413,7 @@ function BillingManagement() {
               className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
             >
               <Printer className="w-4 h-4 inline mr-2" />
-              {isThai ? 'พิมพ์อีกครั้ง' : 'Print Again'}
+              พิมพ์อีกครั้ง
             </button>
           </div>
         </div>
