@@ -10,18 +10,9 @@ class MenuService {
    * @param {Object} filters - Optional filters { category, availability }
    * @returns {Promise<Array>} Array of menu items
    */
-  async getAllMenuItems(filters = {}) {
-    const query = {};
-
-    if (filters.category) {
-      query.category = filters.category;
-    }
-
-    if (filters.availability) {
-      query.availability = filters.availability;
-    }
-
-    const menuItems = await MenuItem.find(query).sort({
+  async getAllMenuItems() {
+    // คืนข้อมูลเมนูทั้งหมด ไม่ใช้ filter
+    const menuItems = await MenuItem.find({}).sort({
       category: 1,
       nameEnglish: 1,
     });

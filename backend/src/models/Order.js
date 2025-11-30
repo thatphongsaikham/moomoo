@@ -65,6 +65,11 @@ const orderSchema = new mongoose.Schema({
     default: "",
     maxlength: 500,
   },
+  customerName: {
+    type: String,
+    default: "",
+    maxlength: 100,
+  },
 });
 
 // Indexes for FIFO queue processing

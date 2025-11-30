@@ -8,16 +8,19 @@ import OrderService from "../services/OrderService.js";
  * @body    { tableNumber: Number, items: [{menuItem: String, quantity: Number}], notes: String }
  */
 export const createOrder = asyncHandler(async (req, res) => {
+  console.log("รับ request สั่งอาหาร:", req.body);
   const { tableNumber, items, notes } = req.body;
 
   // Validation
   if (!tableNumber || !items || !Array.isArray(items) || items.length === 0) {
+    console.error("ข้อมูลไม่ครบ:", { tableNumber, items });
     res.status(400);
     throw new Error("Table number and items array are required");
   }
 
   // Validate table number range
   if (tableNumber < 1 || tableNumber > 10) {
+    console.error("เลขโต๊ะผิด:", tableNumber);
     res.status(400);
     throw new Error("Table number must be between 1 and 10");
   }
@@ -25,13 +28,21 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Validate items structure
   for (const item of items) {
     if (!item.menuItem || !item.quantity || item.quantity < 1) {
+      console.error("ข้อมูลเมนูผิด:", item);
       res.status(400);
       throw new Error("Each item must have menuItem ID and quantity >= 1");
     }
   }
 
   // Create order via service
-  const order = await OrderService.placeOrder(tableNumber, items, notes);
+  let order;
+  try {
+    order = await OrderService.placeOrder(tableNumber, items, notes);
+    console.log("สร้างออเดอร์สำเร็จ:", order);
+  } catch (err) {
+    console.error("เกิด error ใน OrderService.placeOrder:", err);
+    throw err;
+  }
 
   res.status(201).json({
     success: true,

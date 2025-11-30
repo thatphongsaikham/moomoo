@@ -24,52 +24,56 @@ class OrderService {
       throw new Error(`Table ${tableNumber} is not open for orders`);
     }
 
-    // Validate and enrich items with menu data
-    const enrichedItems = [];
-    let hasSpecialItems = false;
-
+    // Enrich items and split by category
+    const normalItems = [];
+    const specialItems = [];
     for (const item of items) {
       const menuItem = await MenuItem.findById(item.menuItem);
-
       if (!menuItem) {
         throw new Error(`Menu item ${item.menuItem} not found`);
       }
-
       if (menuItem.availability !== "Available") {
         throw new Error(
           `${menuItem.nameEnglish} is currently ${menuItem.availability}`
         );
       }
-
-      // Check if this is a special menu item (not buffet)
-      if (menuItem.category === "Special Menu") {
-        hasSpecialItems = true;
-      }
-
-      enrichedItems.push({
+      const enriched = {
         menuItem: menuItem._id,
         nameThai: menuItem.nameThai,
         nameEnglish: menuItem.nameEnglish,
         price: menuItem.price,
         quantity: item.quantity,
-      });
+      };
+      if (menuItem.category === "Special Menu") {
+        specialItems.push(enriched);
+      } else {
+        normalItems.push(enriched);
+      }
     }
 
-    // Determine queue type based on items
-    // Normal Queue: Only buffet items OR no special items
-    // Special Queue: Contains at least one special menu item
-    const queueType = hasSpecialItems ? "Special" : "Normal";
-
-    // Create order
-    const order = await Order.create({
-      tableNumber,
-      queueType,
-      items: enrichedItems,
-      status: "Pending",
-      notes: notes || "",
-    });
-
-    return order;
+    const createdOrders = [];
+    if (normalItems.length > 0) {
+      const normalOrder = await Order.create({
+        tableNumber,
+        queueType: "Normal",
+        items: normalItems,
+        status: "Pending",
+        notes: notes || "",
+      });
+      createdOrders.push(normalOrder);
+    }
+    if (specialItems.length > 0) {
+      const specialOrder = await Order.create({
+        tableNumber,
+        queueType: "Special",
+        items: specialItems,
+        status: "Pending",
+        notes: notes || "",
+      });
+      createdOrders.push(specialOrder);
+    }
+    // ถ้ามีแค่ normal หรือ special จะ return ออเดอร์เดียว ถ้ามีทั้งสอง return array
+    return createdOrders.length === 1 ? createdOrders[0] : createdOrders;
   }
 
   /**

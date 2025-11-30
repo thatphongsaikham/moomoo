@@ -18,23 +18,44 @@ const menuItemSchema = new mongoose.Schema({
   },
 });
 
-// เก็บหมวดหมู่
-const menuCategorySchema = new mongoose.Schema({
+// เมนูแต่ละรายการ (ใช้ collection menuitems)
+const menuItemFullSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ["Menu", "Special Menu"], 
-    unique: true,                   
+    enum: ["Starter Buffet", "Premium Buffet", "Special Menu"],
   },
-
-  items: {
-    type: [menuItemSchema],
-    default: [],
+  nameThai: {
+    type: String,
+    required: true,
+  },
+  nameEnglish: {
+    type: String,
+    required: true,
+  },
+  descriptionThai: {
+    type: String,
+    default: "",
+  },
+  descriptionEnglish: {
+    type: String,
+    default: "",
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  availability: {
+    type: String,
+    default: "Available",
+  },
+  imageUrl: {
+    type: String,
+    default: "",
   },
 });
 
-const MenuCategory = mongoose.model("MenuCategory", menuCategorySchema);
+const MenuItem = mongoose.model("MenuItem", menuItemFullSchema);
 
-export default MenuCategory;
-
-
+export default MenuItem;
