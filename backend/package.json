@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Simple Express + MongoDB backend",
+  "description": "Simple Express + SQLite backend",
   "main": "src/server.js",
   "type": "module",
   "scripts": {

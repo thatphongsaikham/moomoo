@@ -34,19 +34,22 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  // Create order via service
+  // Create order via service (synchronous - SQLite)
   let order;
   try {
-    order = await OrderService.placeOrder(tableNumber, items, notes);
+    order = OrderService.placeOrder(tableNumber, items, notes);
     console.log("สร้างออเดอร์สำเร็จ:", order);
   } catch (err) {
     console.error("เกิด error ใน OrderService.placeOrder:", err);
     throw err;
   }
 
+  // Handle array response (when both normal and special items exist)
+  const queueType = Array.isArray(order) ? "Normal & Special" : order.queueType;
+
   res.status(201).json({
     success: true,
-    message: `Order placed in ${order.queueType} queue`,
+    message: `Order placed in ${queueType} queue`,
     data: order,
   });
 });
@@ -65,7 +68,7 @@ export const getQueueOrders = asyncHandler(async (req, res) => {
     throw new Error("Queue type must be Normal or Special");
   }
 
-  const orders = await OrderService.getQueueOrders(queueType);
+  const orders = OrderService.getQueueOrders(queueType);
 
   res.status(200).json({
     success: true,
@@ -88,7 +91,7 @@ export const getTableOrders = asyncHandler(async (req, res) => {
     throw new Error("Invalid table number");
   }
 
-  const orders = await OrderService.getTableOrders(tableNumber);
+  const orders = OrderService.getTableOrders(tableNumber);
 
   res.status(200).json({
     success: true,
@@ -106,7 +109,7 @@ export const getTableOrders = asyncHandler(async (req, res) => {
 export const completeOrder = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const order = await OrderService.completeOrder(id);
+  const order = OrderService.completeOrder(id);
 
   res.status(200).json({
     success: true,

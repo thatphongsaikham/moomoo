@@ -12,9 +12,10 @@ function Home() {
   const [tableNumber, setTableNumber] = useState('');
   const [pin, setPin] = useState('');
   const [showMenu, setShowMenu] = useState(false);
-  const [menuItems, setMenuItems] = useState([]);
+  // Menu data grouped by category: { starter: [], premium: [], special: [] }
+  const [menuData, setMenuData] = useState({ starter: [], premium: [], special: [] });
   const [loading, setLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Starter Buffet');
+  const [selectedCategory, setSelectedCategory] = useState('starter');
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -22,14 +23,17 @@ function Home() {
         setLoading(true);
         const response = await menuService.getAllMenuItems();
         console.log('Menu response:', response);
-        // Handle different response structures
-        const items = response?.data || response || [];
-        console.log('Parsed items:', items);
-        console.log('Is array:', Array.isArray(items));
-        setMenuItems(Array.isArray(items) ? items : []);
+        // Backend returns { success: true, data: { starter: [], premium: [], special: [] } }
+        const data = response?.data || response || { starter: [], premium: [], special: [] };
+        console.log('Parsed menu data:', data);
+        setMenuData({
+          starter: data.starter || [],
+          premium: data.premium || [],
+          special: data.special || []
+        });
       } catch (error) {
         console.error('Error fetching menu:', error);
-        setMenuItems([]);
+        setMenuData({ starter: [], premium: [], special: [] });
       } finally {
         setLoading(false);
       }
@@ -163,10 +167,9 @@ function Home() {
             <button
               onClick={() => {
                 console.log('Button clicked, current showMenu:', showMenu);
-                console.log('Current menuItems:', menuItems);
+                console.log('Current menuData:', menuData);
                 console.log('Current loading:', loading);
                 setShowMenu(!showMenu);
-                setSelectedCategory('Starter Buffet');
               }}
               className="border-2 border-red-600 text-red-400 hover:bg-red-600 hover:text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-red-600/50 animate-pulse"
             >
@@ -185,34 +188,34 @@ function Home() {
                 {/* Category Filter Buttons */}
                 <div className="flex flex-wrap justify-center gap-4 mb-8">
                   <button
-                    onClick={() => setSelectedCategory('Starter Buffet')}
+                    onClick={() => setSelectedCategory('starter')}
                     className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                      selectedCategory === 'Starter Buffet'
+                      selectedCategory === 'starter'
                         ? 'bg-red-600 text-white'
                         : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     }`}
                   >
-                    Starter
+                    Starter ({menuData.starter.length})
                   </button>
                   <button
-                    onClick={() => setSelectedCategory('Premium Buffet')}
+                    onClick={() => setSelectedCategory('premium')}
                     className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                      selectedCategory === 'Premium Buffet'
+                      selectedCategory === 'premium'
                         ? 'bg-red-600 text-white'
                         : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     }`}
                   >
-                    Premium
+                    Premium ({menuData.premium.length})
                   </button>
                   <button
-                    onClick={() => setSelectedCategory('Special Menu')}
+                    onClick={() => setSelectedCategory('special')}
                     className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                      selectedCategory === 'Special Menu'
+                      selectedCategory === 'special'
                         ? 'bg-red-600 text-white'
                         : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                     }`}
                   >
-                    A la carte
+                    A la carte ({menuData.special.length})
                   </button>
                 </div>
                 
@@ -221,106 +224,36 @@ function Home() {
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600"></div>
                     <p className="text-gray-400 mt-4">{isThai ? 'กำลังโหลดเมนู...' : 'Loading menu...'}</p>
                   </div>
-                ) : menuItems && Array.isArray(menuItems) && menuItems.length > 0 ? (
-                  <div className="space-y-12">
-                    {/* Show filtered category */}
-                    {selectedCategory === 'Starter Buffet' && 
-                     menuItems.filter(item => item.category === 'Starter Buffet').length > 0 && (
-                      <div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {menuItems.filter(item => item.category === 'Starter Buffet').map((item) => (
-                            <div key={item._id} className="bg-black/50 border border-red-600/20 rounded-lg p-4 hover:border-red-600/50 transition-all">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="text-lg font-semibold text-white">{isThai ? item.nameThai : item.nameEnglish}</h4>
-                              </div>
-                              <p className="text-gray-400 text-sm mb-2">{isThai ? item.nameEnglish : item.nameThai}</p>
-                              {(isThai ? item.descriptionThai : item.descriptionEnglish) && (
-                                <p className="text-gray-500 text-xs">{isThai ? item.descriptionThai : item.descriptionEnglish}</p>
-                              )}
-                              <div className="mt-3 flex items-center justify-between">
-                                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-                                  {item.category}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  item.availability === 'Available' 
-                                    ? 'bg-green-600/20 text-green-400' 
-                                    : 'bg-red-600/20 text-red-400'
-                                }`}>
-                                  {item.availability === 'Available' ? (isThai ? 'พร้อมให้บริการ' : 'Available') : (isThai ? 'หมด' : 'Out of Stock')}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
+                ) : menuData[selectedCategory] && menuData[selectedCategory].length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {menuData[selectedCategory].map((item) => (
+                      <div key={item.id || item._id} className="bg-black/50 border border-red-600/20 rounded-lg p-4 hover:border-red-600/50 transition-all">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-lg font-semibold text-white">{item.name}</h4>
+                          {selectedCategory === 'special' && item.price > 0 && (
+                            <span className="text-red-400 font-bold">฿{item.price}</span>
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-gray-400 text-sm mb-2">{item.description}</p>
+                        )}
+                        {item.foodType && (
+                          <p className="text-gray-500 text-xs mb-2">{item.foodType}</p>
+                        )}
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
+                            {selectedCategory === 'starter' ? 'Starter' : selectedCategory === 'premium' ? 'Premium' : 'A la carte'}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            item.isAvailable 
+                              ? 'bg-green-600/20 text-green-400' 
+                              : 'bg-red-600/20 text-red-400'
+                          }`}>
+                            {item.isAvailable ? (isThai ? 'พร้อมให้บริการ' : 'Available') : (isThai ? 'หมด' : 'Out of Stock')}
+                          </span>
                         </div>
                       </div>
-                    )}
-
-                    {/* Premium Buffet Section */}
-                    {selectedCategory === 'Premium Buffet' && 
-                     menuItems.filter(item => item.category === 'Premium Buffet').length > 0 && (
-                      <div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {menuItems.filter(item => item.category === 'Premium Buffet').map((item) => (
-                            <div key={item._id} className="bg-black/50 border border-red-600/20 rounded-lg p-4 hover:border-red-600/50 transition-all">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="text-lg font-semibold text-white">{isThai ? item.nameThai : item.nameEnglish}</h4>
-                              </div>
-                              <p className="text-gray-400 text-sm mb-2">{isThai ? item.nameEnglish : item.nameThai}</p>
-                              {(isThai ? item.descriptionThai : item.descriptionEnglish) && (
-                                <p className="text-gray-500 text-xs">{isThai ? item.descriptionThai : item.descriptionEnglish}</p>
-                              )}
-                              <div className="mt-3 flex items-center justify-between">
-                                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-                                  {item.category}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  item.availability === 'Available' 
-                                    ? 'bg-green-600/20 text-green-400' 
-                                    : 'bg-red-600/20 text-red-400'
-                                }`}>
-                                  {item.availability === 'Available' ? (isThai ? 'พร้อมให้บริการ' : 'Available') : (isThai ? 'หมด' : 'Out of Stock')}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Special Menu (อลาคาด) Section */}
-                    {selectedCategory === 'Special Menu' && 
-                     menuItems.filter(item => item.category === 'Special Menu').length > 0 && (
-                      <div>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                          {menuItems.filter(item => item.category === 'Special Menu').map((item) => (
-                            <div key={item._id} className="bg-black/50 border border-red-600/20 rounded-lg p-4 hover:border-red-600/50 transition-all">
-                              <div className="flex justify-between items-start mb-2">
-                                <h4 className="text-lg font-semibold text-white">{isThai ? item.nameThai : item.nameEnglish}</h4>
-                                {item.price > 0 && (
-                                  <span className="text-red-400 font-bold">฿{item.price}</span>
-                                )}
-                              </div>
-                              <p className="text-gray-400 text-sm mb-2">{isThai ? item.nameEnglish : item.nameThai}</p>
-                              {(isThai ? item.descriptionThai : item.descriptionEnglish) && (
-                                <p className="text-gray-500 text-xs">{isThai ? item.descriptionThai : item.descriptionEnglish}</p>
-                              )}
-                              <div className="mt-3 flex items-center justify-between">
-                                <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">
-                                  {item.category}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded ${
-                                  item.availability === 'Available' 
-                                    ? 'bg-green-600/20 text-green-400' 
-                                    : 'bg-red-600/20 text-red-400'
-                                }`}>
-                                  {item.availability === 'Available' ? (isThai ? 'พร้อมให้บริการ' : 'Available') : (isThai ? 'หมด' : 'Out of Stock')}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8">

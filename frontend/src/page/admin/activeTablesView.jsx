@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Clock, Users, Utensils, AlertCircle } from 'lucide-react';
+import { Clock, Users, Utensils, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import tableService from '../../services/tableService';
 import orderService from '../../services/orderService';
 import { useBilingual } from '../../hook/useBilingual';
@@ -179,6 +179,17 @@ function ActiveTablesView() {
   const fetchingRef = useRef(false);
   const mountedRef = useRef(true);
   const [tick, setTick] = useState(0); // For realtime countdown
+  const [expandedTables, setExpandedTables] = useState({}); // Track which tables have expanded order details
+
+  /**
+   * Toggle order details visibility for a table
+   */
+  const toggleTableExpand = (tableId) => {
+    setExpandedTables(prev => ({
+      ...prev,
+      [tableId]: !prev[tableId]
+    }));
+  };
 
   /**
    * Fetch active tables and their orders
@@ -453,62 +464,84 @@ function ActiveTablesView() {
 
               {/* Orders Section */}
               <div className="mt-4">
-                <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={() => toggleTableExpand(table._id)}
+                  className="w-full flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-700/50 rounded-xl border border-gray-700 transition-colors"
+                >
                   <h4 className="text-lg font-semibold text-white flex items-center">
                     <Utensils className="w-5 h-5 mr-2 text-red-400" />
-                    {isThai ? 'ออเดอร์' : 'Orders'} ({table.orderCount})
+                    {isThai ? 'ออเดอร์' : 'Orders'} 
+                    <span className="ml-2 bg-blue-600 text-white text-sm px-2 py-0.5 rounded-full">
+                      {table.orderCount}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-400 font-normal">
+                      ({table.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)} {isThai ? 'รายการ' : 'items'})
+                    </span>
                   </h4>
-                </div>
-
-                {table.orders.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500">
-                    {isThai ? 'ยังไม่มีออเดอร์' : 'No orders yet'}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-400">
+                      {expandedTables[table._id] ? (isThai ? 'ซ่อน' : 'Hide') : (isThai ? 'ดูรายละเอียด' : 'Show details')}
+                    </span>
+                    {expandedTables[table._id] ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    {table.orders.map((order) => (
-                      <div
-                        key={order._id}
-                        className="bg-gray-900/30 rounded-lg p-4 border border-gray-700"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <p className="text-sm text-gray-400">
-                              {isThai ? 'ออเดอร์' : 'Order'} #{order._id.slice(-6)}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {new Date(order.createdAt).toLocaleTimeString('th-TH')}
-                            </p>
-                          </div>
-                          {getStatusBadge(order)}
-                        </div>
+                </button>
 
-                        {/* Order Items */}
-                        <div className="mt-3 space-y-2">
-                          {order.items.map((item, idx) => (
-                            <div 
-                              key={`${order._id}-item-${item.menuItem?._id || idx}`} 
-                              className="flex justify-between text-sm"
-                            >
-                              <span className="text-gray-300">
-                                {item.quantity}x {isThai ? item.menuItem?.nameThai : item.menuItem?.nameEnglish}
-                              </span>
-                              {item.menuItem?.price > 0 && (
-                                <span className="text-gray-400">฿{item.menuItem.price * item.quantity}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Special Notes */}
-                        {order.specialNotes && (
-                          <div className="mt-3 pt-3 border-t border-gray-700">
-                            <p className="text-xs text-gray-500">{isThai ? 'หมายเหตุ' : 'Notes'}:</p>
-                            <p className="text-sm text-gray-400">{order.specialNotes}</p>
-                          </div>
-                        )}
+                {/* Collapsible Order Details */}
+                {expandedTables[table._id] && (
+                  <div className="mt-3 space-y-3 animate-in slide-in-from-top-2 duration-200">
+                    {table.orders.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        {isThai ? 'ยังไม่มีออเดอร์' : 'No orders yet'}
                       </div>
-                    ))}
+                    ) : (
+                      table.orders.map((order) => (
+                        <div
+                          key={order._id}
+                          className="bg-gray-900/30 rounded-lg p-4 border border-gray-700"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-400">
+                                {isThai ? 'ออเดอร์' : 'Order'} #{String(order._id).slice(-6)}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(order.createdAt).toLocaleTimeString('th-TH', { timeZone: 'Asia/Bangkok' })}
+                              </p>
+                            </div>
+                            {getStatusBadge(order)}
+                          </div>
+
+                          {/* Order Items */}
+                          <div className="mt-3 space-y-2">
+                            {order.items.map((item, idx) => (
+                              <div 
+                                key={`${order._id}-item-${item.menuItemId || idx}`} 
+                                className="flex justify-between text-sm"
+                              >
+                                <span className="text-gray-300">
+                                  {item.quantity}x {isThai ? (item.nameThai || item.nameEnglish) : (item.nameEnglish || item.nameThai)}
+                                </span>
+                                {item.price > 0 && (
+                                  <span className="text-gray-400">฿{item.price * item.quantity}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Special Notes */}
+                          {order.specialNotes && (
+                            <div className="mt-3 pt-3 border-t border-gray-700">
+                              <p className="text-xs text-gray-500">{isThai ? 'หมายเหตุ' : 'Notes'}:</p>
+                              <p className="text-sm text-gray-400">{order.specialNotes}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
               </div>

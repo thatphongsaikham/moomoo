@@ -9,11 +9,10 @@ function generatePIN() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
 
-function encryptTableId(tableNumber) {
-  const encrypted = CryptoJS.AES.encrypt(
-    String(tableNumber),
-    SECRET_KEY
-  ).toString();
+function encryptTableId(tableNumber, sessionTimestamp) {
+  // รวม tableNumber และ sessionTimestamp เพื่อให้ link ใช้ได้แค่ session นี้
+  const payload = JSON.stringify({ tableNumber, session: sessionTimestamp });
+  const encrypted = CryptoJS.AES.encrypt(payload, SECRET_KEY).toString();
   // Make URL-safe by replacing special characters
   return encodeURIComponent(encrypted);
 }
@@ -53,9 +52,10 @@ class TableService {
     // Determine buffet price
     const buffetPrice = buffetTier === "Starter" ? 259 : 299;
 
-    // Generate PIN and encrypted ID
+    // Generate PIN and encrypted ID with session timestamp
     const pin = generatePIN();
-    const encryptedId = encryptTableId(tableNumber);
+    const sessionTimestamp = Date.now();
+    const encryptedId = encryptTableId(tableNumber, sessionTimestamp);
 
     // Update table
     Table.update(tableNumber, {

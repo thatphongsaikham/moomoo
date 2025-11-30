@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ShoppingCart, Clock, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ShoppingCart, Clock, AlertCircle, RefreshCw, CheckCircle, Send, ChefHat } from "lucide-react";
 import OrderList from "../../components/order/OrderList";
 import { useOrderQueue } from "../../hook/useOrderQueue";
 import orderService from "../../services/orderService";
@@ -8,25 +8,42 @@ import { useBilingual } from '../../hook/useBilingual';
 export default function OrderQueue() {
   const { isThai } = useBilingual();
   const { normalQueue, specialQueue, loading, error, refetch } = useOrderQueue(3000); // 3s polling
-  const [completingOrder, setCompletingOrder] = useState(null);
+  const [servingOrder, setServingOrder] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  const handleCompleteOrder = async (orderId) => {
+  // Update clock every second
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // ส่งเมนูคิวแรก (complete order)
+  const handleServeFirstOrder = async (queueType) => {
+    const queue = queueType === 'Normal' ? normalQueue : specialQueue;
+    if (queue.length === 0) return;
+    
+    const firstOrder = queue[0];
     try {
-      setCompletingOrder(orderId);
-      await orderService.completeOrder(orderId);
+      setServingOrder(firstOrder._id);
+      await orderService.completeOrder(firstOrder._id);
       
       // Show success message
-      setSuccessMessage(isThai ? 'ทำเครื่องหมายออเดอร์เสร็จสิ้นแล้ว' : 'Order marked as completed');
+      const tableNum = firstOrder.tableNumber;
+      setSuccessMessage(
+        isThai 
+          ? `✅ ส่งเมนูโต๊ะ ${tableNum} เรียบร้อย!` 
+          : `✅ Served to Table ${tableNum}!`
+      );
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Refetch queues to update UI
       refetch();
     } catch (err) {
-      console.error('Failed to complete order:', err);
-      alert(err.message || 'Failed to complete order');
+      console.error('Failed to serve order:', err);
+      alert(err.message || 'Failed to serve order');
     } finally {
-      setCompletingOrder(null);
+      setServingOrder(null);
     }
   };
 
@@ -34,9 +51,9 @@ export default function OrderQueue() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg">
             {isThai ? 'กำลังโหลดคิวออเดอร์...' : 'Loading order queues...'}
           </p>
@@ -46,127 +63,102 @@ export default function OrderQueue() {
   }
 
   return (
-    <div className="p-6 md:p-8 min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div className="p-4 md:p-6 lg:p-8 min-h-screen">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex justify-center items-center mb-4">
-          <div className="bg-blue-600 p-3 rounded-full mr-4">
-            <ShoppingCart className="w-8 h-8 text-white" />
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-green-600 p-2.5 rounded-xl">
+              <ChefHat className="w-6 h-6 md:w-7 md:h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">
+                {isThai ? '🍳 คิวออเดอร์ครัว' : '🍳 Kitchen Queue'}
+              </h1>
+              <p className="text-gray-400 text-sm">
+                {isThai ? 'กดส่งเมนูเมื่อทำเสร็จ' : 'Press serve when ready'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold text-white">
-              {isThai ? 'คิวออเดอร์ครัว' : 'Kitchen Order Queue'}
-            </h1>
-            <p className="text-blue-400 text-lg mt-2">
-              {isThai ? 'จัดการคิวธรรมดาและคิวพิเศษ' : 'Manage Normal & Special Queues'}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-gray-300 bg-gray-800/50 px-4 py-2 rounded-lg">
+              <Clock className="w-4 h-4" />
+              <span className="font-mono text-lg">
+                {currentTime.toLocaleTimeString('th-TH', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                  hour12: false
+                })}
+              </span>
+            </div>
+            <button
+              onClick={refetch}
+              className="p-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              title={isThai ? 'รีเฟรช' : 'Refresh'}
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
           </div>
-        </div>
-        <div className="flex items-center justify-center text-gray-400">
-          <Clock className="w-4 h-4 mr-2" />
-          <span className="font-mono">
-            {new Date().toLocaleTimeString(isThai ? 'th-TH' : 'en-US', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            })}
-          </span>
         </div>
       </div>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard
-          title={isThai ? 'ออเดอร์ทั้งหมด' : 'Total Orders'}
-          count={totalCount}
-          color="bg-gradient-to-br from-blue-500 to-blue-600"
-        />
-        <StatCard
-          title={isThai ? 'คิวธรรมดา' : 'Normal Queue'}
-          count={normalQueue.length}
-          color="bg-gradient-to-br from-blue-400 to-blue-500"
-        />
-        <StatCard
-          title={isThai ? 'คิวพิเศษ' : 'Special Queue'}
-          count={specialQueue.length}
-          color="bg-gradient-to-br from-purple-400 to-purple-500"
-        />
+      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+        <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-3 md:p-4 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-white mb-1">{totalCount}</div>
+          <div className="text-xs md:text-sm text-gray-400">
+            {isThai ? 'ออเดอร์ทั้งหมด' : 'Total'}
+          </div>
+        </div>
+        <div className="bg-blue-900/30 border border-blue-600/30 rounded-xl p-3 md:p-4 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-blue-400 mb-1">{normalQueue.length}</div>
+          <div className="text-xs md:text-sm text-blue-300">
+            {isThai ? 'คิวปกติ' : 'Normal'}
+          </div>
+        </div>
+        <div className="bg-purple-900/30 border border-purple-600/30 rounded-xl p-3 md:p-4 text-center">
+          <div className="text-3xl md:text-4xl font-bold text-purple-400 mb-1">{specialQueue.length}</div>
+          <div className="text-xs md:text-sm text-purple-300">
+            {isThai ? 'คิวพิเศษ' : 'Special'}
+          </div>
+        </div>
       </div>
 
       {/* Success Message */}
       {successMessage && (
-        <div className="bg-green-600/20 border border-green-600/50 rounded-xl p-4 mb-6 animate-pulse">
-          <div className="flex items-center">
+        <div className="bg-green-900/30 border border-green-500/50 rounded-xl p-4 mb-6 animate-pulse">
+          <div className="flex items-center justify-center">
             <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
-            <p className="text-green-400 font-semibold">{successMessage}</p>
+            <p className="text-green-400 font-semibold text-lg">{successMessage}</p>
           </div>
         </div>
       )}
 
       {/* Error Alert */}
       {error && (
-        <div className="bg-red-600/20 border border-red-600/50 rounded-xl p-4 mb-6">
+        <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 mb-6">
           <div className="flex items-center">
             <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
-            <div>
-              <p className="text-red-400 font-semibold">
-                {isThai ? 'เกิดข้อผิดพลาด' : 'Error'}
-              </p>
-              <p className="text-gray-400 text-sm">{error}</p>
-            </div>
+            <p className="text-red-400">{error}</p>
           </div>
         </div>
       )}
 
-      {/* Empty State */}
-      {totalCount === 0 && (
-        <div className="bg-gray-800 rounded-xl p-12 text-center border-2 border-gray-700 mb-8">
-          <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400 text-xl font-semibold">
-            {isThai ? 'ไม่มีออเดอร์ในคิว' : 'No orders in queue'}
-          </p>
-          <p className="text-gray-500 text-sm mt-2">
-            {isThai ? 'รอออเดอร์ใหม่จากลูกค้า...' : 'Waiting for new customer orders...'}
-          </p>
-        </div>
-      )}
-
-      {/* Order Queues */}
-      <div className="grid md:grid-cols-2 gap-8 mb-8">
+      {/* Order Queues - 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mt-2">
         <OrderList
           queueType="Normal"
           orders={normalQueue}
-          onComplete={handleCompleteOrder}
+          onServeFirst={() => handleServeFirstOrder('Normal')}
+          isServing={servingOrder === (normalQueue[0]?._id)}
         />
         <OrderList
           queueType="Special"
           orders={specialQueue}
-          onComplete={handleCompleteOrder}
+          onServeFirst={() => handleServeFirstOrder('Special')}
+          isServing={servingOrder === (specialQueue[0]?._id)}
         />
-      </div>
-
-      {/* Refresh Button */}
-      <div className="flex justify-center">
-        <button
-          onClick={refetch}
-          className="flex items-center px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors shadow-lg"
-        >
-          <RefreshCw className="w-4 h-4 mr-2" />
-          {isThai ? 'รีเฟรชคิว' : 'Refresh Queues'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ title, count, color }) {
-  return (
-    <div className={`${color} rounded-xl p-6 shadow-lg text-white`}>
-      <div className="text-center">
-        <div className="text-5xl font-bold mb-2">{count}</div>
-        <div className="text-sm font-semibold uppercase tracking-wide opacity-90">
-          {title}
-        </div>
       </div>
     </div>
   );

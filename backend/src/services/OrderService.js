@@ -1,20 +1,22 @@
 import Order from "../models/Order.js";
 import MenuItem from "../models/MenuItem.js";
 import Table from "../models/Table.js";
+import Bill from "../models/Bill.js";
 
 /**
  * OrderService - Business logic for order management
  * Handles order placement and queue assignment
+ * Uses SQLite (synchronous operations)
  */
 class OrderService {
   /**
    * Place a new order and assign to appropriate queue
    * @param {Number} tableNumber - Table number (1-10)
-   * @param {Array} items - Array of {menuItem: ObjectId, quantity: Number}
+   * @param {Array} items - Array of {menuItem: String, quantity: Number}
    * @param {String} notes - Optional order notes
    * @returns {Object} Created order
    */
-  async placeOrder(tableNumber, items, notes = "") {
+  placeOrder(tableNumber, items, notes = "") {
     // Validate table exists and is open
     const table = Table.findByNumber(tableNumber);
     if (!table) {
@@ -27,8 +29,9 @@ class OrderService {
     // Enrich items and split by category
     const normalItems = [];
     const specialItems = [];
+
     for (const item of items) {
-      const menuItem = await MenuItem.findById(item.menuItem);
+      const menuItem = MenuItem.findById(item.menuItem);
       if (!menuItem) {
         throw new Error(`Menu item ${item.menuItem} not found`);
       }
@@ -52,8 +55,9 @@ class OrderService {
     }
 
     const createdOrders = [];
+
     if (normalItems.length > 0) {
-      const normalOrder = await Order.create({
+      const normalOrder = Order.create({
         tableNumber,
         queueType: "Normal",
         items: normalItems,
@@ -62,8 +66,9 @@ class OrderService {
       });
       createdOrders.push(normalOrder);
     }
+
     if (specialItems.length > 0) {
-      const specialOrder = await Order.create({
+      const specialOrder = Order.create({
         tableNumber,
         queueType: "Special",
         items: specialItems,
@@ -71,7 +76,23 @@ class OrderService {
         notes: notes || "",
       });
       createdOrders.push(specialOrder);
+
+      // เพิ่มเมนู Special ลงบิลเพื่อคิดเงินตอนปิดโต๊ะ
+      const activeBill = Bill.findActiveByTable(tableNumber);
+      if (activeBill) {
+        for (const item of specialItems) {
+          Bill.addSpecialItem(activeBill._id, {
+            menuItemId: item.menuItem,
+            nameThai: item.nameThai,
+            nameEnglish: item.nameEnglish,
+            price: item.price,
+            quantity: item.quantity,
+            subtotal: item.price * item.quantity,
+          });
+        }
+      }
     }
+
     // ถ้ามีแค่ normal หรือ special จะ return ออเดอร์เดียว ถ้ามีทั้งสอง return array
     return createdOrders.length === 1 ? createdOrders[0] : createdOrders;
   }
@@ -81,7 +102,7 @@ class OrderService {
    * @param {String} queueType - 'Normal' or 'Special'
    * @returns {Array} Orders sorted by FIFO (createdAt ascending)
    */
-  async getQueueOrders(queueType) {
+  getQueueOrders(queueType) {
     return Order.findByQueue(queueType, "Pending");
   }
 
@@ -89,7 +110,7 @@ class OrderService {
    * Get all pending orders in Normal queue
    * @returns {Array} Orders sorted by FIFO
    */
-  async getNormalQueue() {
+  getNormalQueue() {
     return this.getQueueOrders("Normal");
   }
 
@@ -97,7 +118,7 @@ class OrderService {
    * Get all pending orders in Special queue
    * @returns {Array} Orders sorted by FIFO
    */
-  async getSpecialQueue() {
+  getSpecialQueue() {
     return this.getQueueOrders("Special");
   }
 
@@ -106,7 +127,7 @@ class OrderService {
    * @param {Number} tableNumber - Table number
    * @returns {Array} Orders for the table
    */
-  async getTableOrders(tableNumber) {
+  getTableOrders(tableNumber) {
     return Order.findByTable(tableNumber);
   }
 
@@ -115,7 +136,7 @@ class OrderService {
    * @param {String|Number} orderId - Order ID
    * @returns {Object} Updated order
    */
-  async completeOrder(orderId) {
+  completeOrder(orderId) {
     const order = Order.findById(orderId);
 
     if (!order) {
@@ -134,7 +155,7 @@ class OrderService {
    * @param {Number} tableNumber - Table number
    * @returns {Array} Completed orders with special items only
    */
-  async getCompletedOrdersForBilling(tableNumber) {
+  getCompletedOrdersForBilling(tableNumber) {
     return Order.findCompletedForBilling(tableNumber);
   }
 }

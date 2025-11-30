@@ -11,7 +11,7 @@ export const getAllMenuItems = asyncHandler(async (req, res) => {
   const { available } = req.query;
   const availableOnly = available === "true";
 
-  const menuItems = await MenuService.getAllMenuItems(availableOnly);
+  const menuItems = MenuService.getAllMenuItems(availableOnly);
 
   res.status(200).json({
     success: true,
@@ -30,10 +30,7 @@ export const getMenuByCategory = asyncHandler(async (req, res) => {
   const { available } = req.query;
   const availableOnly = available === "true";
 
-  const menuItems = await MenuService.getMenuByCategory(
-    category,
-    availableOnly
-  );
+  const menuItems = MenuService.getMenuByCategory(category, availableOnly);
 
   res.status(200).json({
     success: true,
@@ -50,7 +47,7 @@ export const getMenuByCategory = asyncHandler(async (req, res) => {
 export const getMenuItemById = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = await MenuService.getMenuItemById(category, parseInt(id));
+  const menuItem = MenuService.getMenuItemById(category, parseInt(id));
 
   res.status(200).json({
     success: true,
@@ -67,7 +64,7 @@ export const getMenuItemById = asyncHandler(async (req, res) => {
 export const createMenuItem = asyncHandler(async (req, res) => {
   const { category } = req.params;
 
-  const menuItem = await MenuService.createMenuItem(category, req.body);
+  const menuItem = MenuService.createMenuItem(category, req.body);
 
   res.status(201).json({
     success: true,
@@ -84,11 +81,7 @@ export const createMenuItem = asyncHandler(async (req, res) => {
 export const updateMenuItem = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = await MenuService.updateMenuItem(
-    category,
-    parseInt(id),
-    req.body
-  );
+  const menuItem = MenuService.updateMenuItem(category, parseInt(id), req.body);
 
   res.status(200).json({
     success: true,
@@ -112,7 +105,7 @@ export const toggleAvailability = asyncHandler(async (req, res) => {
     throw new Error("isAvailable is required");
   }
 
-  const menuItem = await MenuService.toggleAvailability(
+  const menuItem = MenuService.toggleAvailability(
     category,
     parseInt(id),
     isAvailable
@@ -133,7 +126,7 @@ export const toggleAvailability = asyncHandler(async (req, res) => {
 export const deleteMenuItem = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = await MenuService.deleteMenuItem(category, parseInt(id));
+  const menuItem = MenuService.deleteMenuItem(category, parseInt(id));
 
   res.status(200).json({
     success: true,

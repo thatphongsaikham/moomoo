@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { DollarSign, FileText, Printer, X, History, Calendar } from 'lucide-react';
 import BillSummary from '../../components/bill/BillSummary';
 import BillPrint from '../../components/bill/BillPrint';
@@ -8,6 +9,7 @@ import { useBilingual } from '../../hook/useBilingual';
 
 function BillingManagement() {
   const { isThai } = useBilingual();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
   const [tables, setTables] = useState([]);
   const [historicalBills, setHistoricalBills] = useState([]);
@@ -16,6 +18,7 @@ function BillingManagement() {
   const [showBillDialog, setShowBillDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialTableLoaded, setInitialTableLoaded] = useState(false);
   
   // No filters needed - show all historical bills
 
@@ -32,7 +35,7 @@ function BillingManagement() {
   };
 
   /**
-   * Fetch all historical bills (no filters)
+   * Fetch all historical bills (no filters) - sorted by newest first
    */
   const fetchHistoricalBills = async () => {
     setLoading(true);
@@ -40,8 +43,10 @@ function BillingManagement() {
       const response = await billService.getHistoricalBills({});
       console.log('Historical bills API response:', response);
       console.log('First bill sample:', response.data[0]);
-      // response.data is already the array of bills
-      setHistoricalBills(Array.isArray(response.data) ? response.data : []);
+      // response.data is already the array of bills - sort by archivedAt descending (newest first)
+      const bills = Array.isArray(response.data) ? response.data : [];
+      const sortedBills = bills.sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
+      setHistoricalBills(sortedBills);
     } catch (error) {
       console.error('Failed to fetch historical bills:', error);
       setHistoricalBills([]);
@@ -67,6 +72,24 @@ function BillingManagement() {
     const interval = setInterval(fetchOpenTables, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  /**
+   * Auto-open bill if table query parameter is present
+   */
+  useEffect(() => {
+    const tableParam = searchParams.get('table');
+    if (tableParam && tables.length > 0 && !initialTableLoaded) {
+      const tableNumber = parseInt(tableParam);
+      // Check if table exists in open tables
+      const tableExists = tables.some(t => t.tableNumber === tableNumber);
+      if (tableExists) {
+        handleViewBill(tableNumber);
+        setInitialTableLoaded(true);
+        // Clear the query parameter
+        setSearchParams({});
+      }
+    }
+  }, [tables, searchParams, initialTableLoaded]);
 
   /**
    * Handle view bill
@@ -242,134 +265,232 @@ function BillingManagement() {
 
       {/* Historical Bills Tab */}
       {activeTab === 'history' && (
-        <div className="bg-gray-800/40 rounded-xl border border-gray-700 p-4 md:p-6">
-          <h2 className="text-lg md:text-xl font-bold mb-4">📋 ประวัติบิล</h2>
-          
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-400">กำลังโหลด...</p>
+        <div className="space-y-4">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <div className="bg-gradient-to-br from-green-900/40 to-green-800/20 p-4 rounded-xl border border-green-600/30">
+              <p className="text-gray-400 text-xs md:text-sm">จำนวนบิลทั้งหมด</p>
+              <p className="text-2xl md:text-3xl font-bold text-green-400">{historicalBills.length}</p>
             </div>
-          ) : historicalBills.length === 0 ? (
-            <div className="text-center py-12">
-              <History className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">
-                ไม่พบประวัติบิล
+            <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/20 p-4 rounded-xl border border-blue-600/30">
+              <p className="text-gray-400 text-xs md:text-sm">ยอดขายรวม</p>
+              <p className="text-2xl md:text-3xl font-bold text-blue-400">
+                ฿{historicalBills.reduce((sum, b) => sum + (b.total || 0), 0).toLocaleString()}
               </p>
             </div>
-          ) : (
-            <>
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {historicalBills.map((bill) => (
-                  <div
-                    key={bill._id}
-                    className="bg-gray-900/30 rounded-lg p-4"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h3 className="text-lg font-bold text-white">
-                          โต๊ะ {bill.tableNumber}
-                        </h3>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {bill.customerCount} ท่าน • {bill.buffetTier === 'Starter' ? 'ธรรมดา' : 'พรีเมียม'}
-                        </p>
-                      </div>
-                      <span className="px-2 py-1 rounded-lg bg-green-900/50 border border-green-600/30 text-green-400 text-xs font-medium">
-                        ชำระแล้ว
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between items-end">
-                      <div className="text-sm text-gray-400">
-                        {new Date(bill.archivedAt).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}
-                        <span className="mx-1">•</span>
-                        {new Date(bill.archivedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
-                      </div>
-                      <div className="text-xl font-bold text-green-400">฿{(bill.total || 0).toFixed(0)}</div>
-                    </div>
-                    
-                    <button
-                      onClick={async () => {
-                        try {
-                          const response = await billService.getBillById(bill._id);
-                          setSelectedBill(response.data);
-                          setShowBillDialog(true);
-                        } catch (error) {
-                          alert(error.message);
-                        }
-                      }}
-                      className="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
-                    >
-                      ดูรายละเอียด
-                    </button>
-                  </div>
-                ))}
-              </div>
+            <div className="bg-gradient-to-br from-yellow-900/40 to-yellow-800/20 p-4 rounded-xl border border-yellow-600/30">
+              <p className="text-gray-400 text-xs md:text-sm">Premium</p>
+              <p className="text-2xl md:text-3xl font-bold text-yellow-400">
+                {historicalBills.filter(b => b.buffetTier === 'Premium').length}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-gray-800/40 to-gray-700/20 p-4 rounded-xl border border-gray-600/30">
+              <p className="text-gray-400 text-xs md:text-sm">Starter</p>
+              <p className="text-2xl md:text-3xl font-bold text-gray-300">
+                {historicalBills.filter(b => b.buffetTier === 'Starter').length}
+              </p>
+            </div>
+          </div>
 
-              {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-900/50 border-b border-gray-700">
-                    <tr>
-                      <th className="text-left px-4 py-3 text-gray-300">โต๊ะ</th>
-                      <th className="text-left px-4 py-3 text-gray-300">ลูกค้า</th>
-                      <th className="text-left px-4 py-3 text-gray-300">ประเภท</th>
-                      <th className="text-left px-4 py-3 text-gray-300">วันที่ปิด</th>
-                      <th className="text-right px-4 py-3 text-gray-300">ยอดรวม</th>
-                      <th className="text-center px-4 py-3 text-gray-300"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700">
-                    {historicalBills.map((bill) => (
-                      <tr key={bill._id} className="hover:bg-gray-700/30 transition-colors">
-                        <td className="px-4 py-3 font-medium text-white">
-                          โต๊ะ {bill.tableNumber}
-                        </td>
-                        <td className="px-4 py-3 text-gray-300">
-                          {bill.customerCount} ท่าน
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            bill.buffetTier === 'Premium' 
-                              ? 'bg-yellow-900/50 text-yellow-400' 
-                              : 'bg-gray-700 text-gray-300'
-                          }`}>
-                            {bill.buffetTier}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400 font-mono text-xs">
-                          {new Date(bill.archivedAt).toLocaleDateString('th-TH', { timeZone: 'Asia/Bangkok' })}
-                          <br />
-                          {new Date(bill.archivedAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' })}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span className="text-lg font-bold text-green-400">฿{(bill.total || 0).toFixed(0)}</span>
-                          <div className="text-xs text-gray-500">VAT ฿{(bill.vatAmount || 0).toFixed(0)}</div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={async () => {
-                              try {
-                                const response = await billService.getBillById(bill._id);
-                                setSelectedBill(response.data);
-                                setShowBillDialog(true);
-                              } catch (error) {
-                                alert(error.message);
-                              }
-                            }}
-                            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                          >
-                            ดู
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Bills List */}
+          <div className="bg-gray-800/40 rounded-xl border border-gray-700 overflow-hidden">
+            <div className="p-4 md:p-6 border-b border-gray-700">
+              <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <History className="w-5 h-5 text-green-400" />
+                ประวัติบิล
+                <span className="text-sm font-normal text-gray-400 ml-2">
+                  (เรียงจากใหม่ → เก่า)
+                </span>
+              </h2>
+            </div>
+          
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-gray-400">กำลังโหลด...</p>
               </div>
-            </>
-          )}
+            ) : historicalBills.length === 0 ? (
+              <div className="text-center py-12">
+                <History className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg">
+                  ไม่พบประวัติบิล
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-700/50">
+                  {historicalBills.map((bill, index) => (
+                    <div
+                      key={bill._id}
+                      className={`p-4 transition-colors hover:bg-gray-700/20 ${index === 0 ? 'bg-green-900/10' : ''}`}
+                    >
+                      {index === 0 && (
+                        <div className="text-xs text-green-400 font-medium mb-2 flex items-center gap-1">
+                          ✨ ล่าสุด
+                        </div>
+                      )}
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${
+                            bill.buffetTier === 'Premium' 
+                              ? 'bg-gradient-to-br from-yellow-600 to-yellow-800 text-yellow-100' 
+                              : 'bg-gradient-to-br from-gray-600 to-gray-800 text-gray-100'
+                          }`}>
+                            {bill.tableNumber}
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-white">
+                              โต๊ะ {bill.tableNumber}
+                            </h3>
+                            <p className="text-xs text-gray-400">
+                              {bill.customerCount} ท่าน • {bill.buffetTier === 'Premium' ? '⭐ Premium' : 'Starter'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-green-400">฿{(bill.total || 0).toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">VAT ฿{(bill.vatAmount || 0).toFixed(0)}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2 text-sm text-gray-400">
+                          <Calendar className="w-4 h-4" />
+                          <span>
+                            {new Date(bill.archivedAt).toLocaleDateString('th-TH', { 
+                              day: 'numeric', month: 'short', year: '2-digit', timeZone: 'Asia/Bangkok' 
+                            })}
+                            {' '}
+                            {new Date(bill.archivedAt).toLocaleTimeString('th-TH', { 
+                              hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' 
+                            })}
+                          </span>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await billService.getBillById(bill._id);
+                              setSelectedBill(response.data);
+                              setShowBillDialog(true);
+                            } catch (error) {
+                              alert(error.message);
+                            }
+                          }}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm flex items-center gap-1"
+                        >
+                          <FileText className="w-4 h-4" />
+                          ดูบิล
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-900/50 border-b border-gray-700">
+                      <tr>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">โต๊ะ</th>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">ลูกค้า</th>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">ประเภท</th>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">ค่าบุฟเฟ่ต์</th>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">เมนูพิเศษ</th>
+                        <th className="text-left px-4 py-3 text-gray-300 font-medium">วันที่ปิด</th>
+                        <th className="text-right px-4 py-3 text-gray-300 font-medium">ยอดรวม</th>
+                        <th className="text-center px-4 py-3 text-gray-300 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700/50">
+                      {historicalBills.map((bill, index) => (
+                        <tr 
+                          key={bill._id} 
+                          className={`hover:bg-gray-700/30 transition-colors ${index === 0 ? 'bg-green-900/10' : ''}`}
+                        >
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold ${
+                                bill.buffetTier === 'Premium' 
+                                  ? 'bg-gradient-to-br from-yellow-600 to-yellow-800 text-yellow-100' 
+                                  : 'bg-gradient-to-br from-gray-600 to-gray-800 text-gray-100'
+                              }`}>
+                                {bill.tableNumber}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white">โต๊ะ {bill.tableNumber}</span>
+                                {index === 0 && (
+                                  <span className="ml-2 text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded-full">
+                                    ล่าสุด
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-gray-300">
+                            <span className="bg-gray-700/50 px-2 py-1 rounded text-sm">{bill.customerCount} ท่าน</span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1 ${
+                              bill.buffetTier === 'Premium' 
+                                ? 'bg-gradient-to-r from-yellow-900/50 to-yellow-800/30 text-yellow-400 border border-yellow-600/30' 
+                                : 'bg-gray-700/50 text-gray-300 border border-gray-600/30'
+                            }`}>
+                              {bill.buffetTier === 'Premium' && '⭐ '}
+                              {bill.buffetTier}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-gray-300">
+                            ฿{(bill.buffetCharges || 0).toLocaleString()}
+                          </td>
+                          <td className="px-4 py-4">
+                            {(bill.specialItemsTotal || 0) > 0 ? (
+                              <span className="text-red-400 font-medium">฿{bill.specialItemsTotal.toLocaleString()}</span>
+                            ) : (
+                              <span className="text-gray-500">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="text-gray-300 font-mono text-sm">
+                              {new Date(bill.archivedAt).toLocaleDateString('th-TH', { 
+                                day: 'numeric', month: 'short', year: '2-digit', timeZone: 'Asia/Bangkok' 
+                              })}
+                            </div>
+                            <div className="text-gray-500 text-xs">
+                              {new Date(bill.archivedAt).toLocaleTimeString('th-TH', { 
+                                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Bangkok' 
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-right">
+                            <div className="text-xl font-bold text-green-400">฿{(bill.total || 0).toLocaleString()}</div>
+                            <div className="text-xs text-gray-500">VAT ฿{(bill.vatAmount || 0).toFixed(0)}</div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await billService.getBillById(bill._id);
+                                  setSelectedBill(response.data);
+                                  setShowBillDialog(true);
+                                } catch (error) {
+                                  alert(error.message);
+                                }
+                              }}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all hover:scale-105 flex items-center gap-1"
+                            >
+                              <FileText className="w-4 h-4" />
+                              ดูบิล
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 

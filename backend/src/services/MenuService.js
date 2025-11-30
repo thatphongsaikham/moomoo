@@ -1,8 +1,10 @@
 import MenuItem from "../models/MenuItem.js";
+import db from "../config/database.js";
 
 /**
  * MenuService - Business logic for menu item management
  * Handles 3 separate menu categories: Starter, Premium, Special
+ * Uses SQLite (synchronous operations)
  */
 class MenuService {
   /**
@@ -10,13 +12,62 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  async getAllMenuItems() {
-    // คืนข้อมูลเมนูทั้งหมด ไม่ใช้ filter
-    const menuItems = await MenuItem.find({}).sort({
-      category: 1,
-      nameEnglish: 1,
-    });
-    return menuItems;
+  getAllMenuItems(availableOnly = false) {
+    // Return menu items grouped by category
+    const allItems = MenuItem.findAll();
+
+    const grouped = {
+      starter: [],
+      premium: [],
+      special: [],
+    };
+
+    for (const item of allItems) {
+      // Convert API format to frontend format
+      const formattedItem = {
+        id: item.id,
+        _id: item._id,
+        name: item.nameThai,
+        description: item.descriptionThai || "",
+        foodType: item.foodType || "",
+        imageUrl: item.imageUrl || "",
+        price: item.price || 0,
+        isAvailable: item.availability === "Available",
+        category: item.category,
+      };
+
+      if (item.category === "Starter Buffet") {
+        grouped.starter.push(formattedItem);
+      } else if (item.category === "Premium Buffet") {
+        grouped.premium.push(formattedItem);
+      } else if (item.category === "Special Menu") {
+        grouped.special.push(formattedItem);
+      }
+    }
+
+    return grouped;
+  }
+
+  /**
+   * Get menu items by category
+   * @param {String} category - Category name (Starter, Premium, Special)
+   * @param {Boolean} availableOnly - Only return available items
+   * @returns {Array} Menu items in category
+   */
+  getMenuByCategory(category, availableOnly = false) {
+    // Map short category names to full names
+    const categoryMap = {
+      Starter: "Starter Buffet",
+      Premium: "Premium Buffet",
+      Special: "Special Menu",
+    };
+
+    const fullCategory = categoryMap[category] || category;
+
+    if (availableOnly) {
+      return MenuItem.findAvailableByCategory(fullCategory);
+    }
+    return MenuItem.findByCategory(fullCategory);
   }
 
   /**
@@ -25,8 +76,12 @@ class MenuService {
    * @param {Number} id - Menu item ID
    * @returns {Object} Menu item
    */
-  async getMenuItemById(category, id) {
-    const menuItem = MenuItem.findById(category, id);
+  getMenuItemById(category, id) {
+    // Build the composite ID
+    const prefix = category.toLowerCase();
+    const compositeId = `${prefix}_${id}`;
+
+    const menuItem = MenuItem.findById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -39,7 +94,7 @@ class MenuService {
    * @param {Object} data - Menu item data
    * @returns {Object} Created menu item
    */
-  async createMenuItem(category, data) {
+  createMenuItem(category, data) {
     const { name, description, imageUrl, foodType, price, isAvailable } = data;
 
     // Validate required fields
@@ -60,14 +115,51 @@ class MenuService {
       throw new Error("Price is required for Special menu and must be >= 0");
     }
 
-    return MenuItem.create(category, {
-      name,
-      description: description || "",
-      imageUrl: imageUrl || "",
-      foodType: foodType || "",
-      price: category === "Special" ? price : 0,
-      isAvailable: isAvailable !== false,
-    });
+    // Get table name
+    const tableMap = {
+      Starter: "starter_menu",
+      Premium: "premium_menu",
+      Special: "special_menu",
+    };
+    const tableName = tableMap[category];
+    const prefix = category.toLowerCase();
+
+    // Insert into database
+    let result;
+    if (category === "Special") {
+      result = db
+        .prepare(
+          `
+        INSERT INTO ${tableName} (name, description, imageUrl, foodType, price, isAvailable, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `
+        )
+        .run(
+          name,
+          description || "",
+          imageUrl || "",
+          foodType || "",
+          price,
+          isAvailable !== false ? 1 : 0
+        );
+    } else {
+      result = db
+        .prepare(
+          `
+        INSERT INTO ${tableName} (name, description, imageUrl, foodType, isAvailable, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      `
+        )
+        .run(
+          name,
+          description || "",
+          imageUrl || "",
+          foodType || "",
+          isAvailable !== false ? 1 : 0
+        );
+    }
+
+    return MenuItem.findById(`${prefix}_${result.lastInsertRowid}`);
   }
 
   /**
@@ -77,8 +169,11 @@ class MenuService {
    * @param {Object} updates - Fields to update
    * @returns {Object} Updated menu item
    */
-  async updateMenuItem(category, id, updates) {
-    const menuItem = MenuItem.findById(category, id);
+  updateMenuItem(category, id, updates) {
+    const prefix = category.toLowerCase();
+    const compositeId = `${prefix}_${id}`;
+
+    const menuItem = MenuItem.findById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -92,7 +187,47 @@ class MenuService {
       throw new Error("Price must be >= 0");
     }
 
-    return MenuItem.updateById(category, id, updates);
+    // Get table name
+    const tableMap = {
+      Starter: "starter_menu",
+      Premium: "premium_menu",
+      Special: "special_menu",
+    };
+    const tableName = tableMap[category];
+
+    // Build update query
+    const fields = [];
+    const values = [];
+    const allowedFields = [
+      "name",
+      "description",
+      "imageUrl",
+      "foodType",
+      "price",
+      "isAvailable",
+    ];
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key)) {
+        if (key === "isAvailable") {
+          fields.push(`${key} = ?`);
+          values.push(value ? 1 : 0);
+        } else {
+          fields.push(`${key} = ?`);
+          values.push(value);
+        }
+      }
+    }
+
+    if (fields.length > 0) {
+      fields.push("updatedAt = datetime('now')");
+      values.push(id);
+      db.prepare(
+        `UPDATE ${tableName} SET ${fields.join(", ")} WHERE id = ?`
+      ).run(...values);
+    }
+
+    return MenuItem.findById(compositeId);
   }
 
   /**
@@ -102,12 +237,15 @@ class MenuService {
    * @param {Boolean} isAvailable - New availability status
    * @returns {Object} Updated menu item
    */
-  async toggleAvailability(category, id, isAvailable) {
-    const menuItem = MenuItem.findById(category, id);
+  toggleAvailability(category, id, isAvailable) {
+    const prefix = category.toLowerCase();
+    const compositeId = `${prefix}_${id}`;
+
+    const menuItem = MenuItem.findById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
-    return MenuItem.toggleAvailability(category, id, isAvailable);
+    return MenuItem.updateAvailability(compositeId, isAvailable);
   }
 
   /**
@@ -116,12 +254,26 @@ class MenuService {
    * @param {Number} id - Menu item ID
    * @returns {Object} Deleted menu item
    */
-  async deleteMenuItem(category, id) {
-    const menuItem = MenuItem.findById(category, id);
+  deleteMenuItem(category, id) {
+    const prefix = category.toLowerCase();
+    const compositeId = `${prefix}_${id}`;
+
+    const menuItem = MenuItem.findById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
-    return MenuItem.deleteById(category, id);
+
+    // Get table name
+    const tableMap = {
+      Starter: "starter_menu",
+      Premium: "premium_menu",
+      Special: "special_menu",
+    };
+    const tableName = tableMap[category];
+
+    db.prepare(`DELETE FROM ${tableName} WHERE id = ?`).run(id);
+
+    return menuItem;
   }
 
   /**
@@ -129,8 +281,8 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Array} All menu items
    */
-  async getAllItemsFlat(availableOnly = false) {
-    return MenuItem.findAllFlat(availableOnly);
+  getAllItemsFlat(availableOnly = false) {
+    return MenuItem.findAll();
   }
 }
 

@@ -1,81 +1,267 @@
-import mongoose from "mongoose";
+import db from "../config/database.js";
 
-const orderSchema = new mongoose.Schema({
-  tableNumber: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 10,
-    ref: "Table",
-  },
-  queueType: {
-    type: String,
-    enum: ["Normal", "Special"],
-    required: true,
-  },
-  items: [
-    {
-      menuItem: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "MenuItem",
-        required: true,
-      },
-      nameThai: {
-        // Snapshot for deleted items
-        type: String,
-        required: true,
-      },
-      nameEnglish: {
-        // Snapshot for deleted items
-        type: String,
-        required: true,
-      },
-      price: {
-        // Snapshot for price changes
-        type: Number,
-        required: true,
-        min: 0,
-      },
-      quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-        default: 1,
-      },
-    },
-  ],
-  status: {
-    type: String,
-    enum: ["Pending", "Completed"],
-    default: "Pending",
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    immutable: true,
-    index: true,
-  },
-  completedAt: {
-    type: Date,
-    default: null,
-  },
-  notes: {
-    type: String,
-    default: "",
-    maxlength: 500,
-  },
-  customerName: {
-    type: String,
-    default: "",
-    maxlength: 100,
-  },
-});
+/**
+ * Order Model - SQLite implementation
+ */
+class Order {
+  /**
+   * Create a new order with items
+   * @param {Object} orderData - { tableNumber, queueType, status, notes, items }
+   * @returns {Object} Created order with items
+   */
+  static create(orderData) {
+    const {
+      tableNumber,
+      queueType,
+      items,
+      status = "Pending",
+      notes = "",
+    } = orderData;
 
-// Indexes for FIFO queue processing
-orderSchema.index({ queueType: 1, status: 1, createdAt: 1 }); // Primary queue index
-orderSchema.index({ tableNumber: 1, status: 1, createdAt: -1 }); // Table order history
+    // Insert order - Use Thailand timezone (UTC+7)
+    const thaiTime = new Date()
+      .toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" })
+      .replace(" ", "T");
 
-const Order = mongoose.model("Order", orderSchema);
+    const insertOrder = db.prepare(`
+      INSERT INTO orders (tableNumber, queueType, status, notes, createdAt)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const result = insertOrder.run(
+      tableNumber,
+      queueType,
+      status,
+      notes,
+      thaiTime
+    );
+    const orderId = result.lastInsertRowid;
+
+    // Insert order items
+    if (items && items.length > 0) {
+      const insertItem = db.prepare(`
+        INSERT INTO order_items (orderId, menuItemId, nameThai, nameEnglish, price, quantity)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const item of items) {
+        insertItem.run(
+          orderId,
+          item.menuItem || item.menuItemId || null,
+          item.nameThai,
+          item.nameEnglish,
+          item.price,
+          item.quantity
+        );
+      }
+    }
+
+    return this.findById(orderId);
+  }
+
+  /**
+   * Find order by ID
+   */
+  static findById(id) {
+    const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(id);
+    if (!order) return null;
+
+    const items = db
+      .prepare("SELECT * FROM order_items WHERE orderId = ?")
+      .all(id);
+    return this.toObject(order, items);
+  }
+
+  /**
+   * Find orders by queue type and status
+   */
+  static findByQueue(queueType, status = null) {
+    let query = "SELECT * FROM orders WHERE queueType = ?";
+    const params = [queueType];
+
+    if (status) {
+      query += " AND status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY createdAt ASC"; // FIFO
+
+    const orders = db.prepare(query).all(...params);
+    return orders.map((order) => {
+      const items = db
+        .prepare("SELECT * FROM order_items WHERE orderId = ?")
+        .all(order.id);
+      return this.toObject(order, items);
+    });
+  }
+
+  /**
+   * Find orders by table number
+   */
+  static findByTable(tableNumber, status = null) {
+    let query = "SELECT * FROM orders WHERE tableNumber = ?";
+    const params = [tableNumber];
+
+    if (status) {
+      query += " AND status = ?";
+      params.push(status);
+    }
+
+    query += " ORDER BY createdAt DESC";
+
+    const orders = db.prepare(query).all(...params);
+    return orders.map((order) => {
+      const items = db
+        .prepare("SELECT * FROM order_items WHERE orderId = ?")
+        .all(order.id);
+      return this.toObject(order, items);
+    });
+  }
+
+  /**
+   * Find completed orders for billing (Special queue only)
+   */
+  static findCompletedForBilling(tableNumber) {
+    const orders = db
+      .prepare(
+        `
+      SELECT * FROM orders 
+      WHERE tableNumber = ? AND queueType = 'Special' AND status = 'Completed'
+      ORDER BY createdAt ASC
+    `
+      )
+      .all(tableNumber);
+
+    return orders.map((order) => {
+      const items = db
+        .prepare("SELECT * FROM order_items WHERE orderId = ?")
+        .all(order.id);
+      return this.toObject(order, items);
+    });
+  }
+
+  /**
+   * Mark order as completed
+   */
+  static complete(orderId) {
+    const thaiTime = new Date()
+      .toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" })
+      .replace(" ", "T");
+
+    db.prepare(
+      `
+      UPDATE orders SET status = 'Completed', completedAt = ?
+      WHERE id = ?
+    `
+    ).run(thaiTime, orderId);
+
+    return this.findById(orderId);
+  }
+
+  /**
+   * Update order status
+   */
+  static updateStatus(orderId, status) {
+    if (status === "Completed") {
+      const thaiTime = new Date()
+        .toLocaleString("sv-SE", { timeZone: "Asia/Bangkok" })
+        .replace(" ", "T");
+
+      db.prepare(
+        `
+        UPDATE orders SET status = ?, completedAt = ?
+        WHERE id = ?
+      `
+      ).run(status, thaiTime, orderId);
+    } else {
+      db.prepare(
+        `
+        UPDATE orders SET status = ?
+        WHERE id = ?
+      `
+      ).run(status, orderId);
+    }
+
+    return this.findById(orderId);
+  }
+
+  /**
+   * Get all pending orders
+   */
+  static findAllPending() {
+    const orders = db
+      .prepare(
+        `
+      SELECT * FROM orders WHERE status = 'Pending' ORDER BY createdAt ASC
+    `
+      )
+      .all();
+
+    return orders.map((order) => {
+      const items = db
+        .prepare("SELECT * FROM order_items WHERE orderId = ?")
+        .all(order.id);
+      return this.toObject(order, items);
+    });
+  }
+
+  /**
+   * Delete orders by table number (for cleanup when table closes)
+   */
+  static deleteByTable(tableNumber) {
+    // Get order IDs first
+    const orders = db
+      .prepare("SELECT id FROM orders WHERE tableNumber = ?")
+      .all(tableNumber);
+
+    if (orders.length > 0) {
+      // Delete order items (CASCADE should handle this, but explicit is safer)
+      const orderIds = orders.map((o) => o.id);
+      for (const orderId of orderIds) {
+        db.prepare("DELETE FROM order_items WHERE orderId = ?").run(orderId);
+      }
+
+      // Delete orders
+      db.prepare("DELETE FROM orders WHERE tableNumber = ?").run(tableNumber);
+    }
+
+    return orders.length;
+  }
+
+  /**
+   * Convert to object format (for API compatibility)
+   */
+  static toObject(order, items = []) {
+    if (!order) return null;
+
+    // Parse stored Thai time - already in Thai timezone
+    const parseThaiTime = (timeStr) => {
+      if (!timeStr) return null;
+      // The time is stored as Thai time, return as ISO string with +07:00
+      return timeStr.replace("T", " ").replace(" ", "T") + "+07:00";
+    };
+
+    return {
+      _id: order.id,
+      id: order.id,
+      tableNumber: order.tableNumber,
+      queueType: order.queueType,
+      status: order.status,
+      notes: order.notes || "",
+      items: items.map((item) => ({
+        _id: item.id,
+        id: item.id,
+        menuItem: item.menuItemId,
+        menuItemId: item.menuItemId,
+        nameThai: item.nameThai,
+        nameEnglish: item.nameEnglish,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      createdAt: parseThaiTime(order.createdAt) || new Date().toISOString(),
+      completedAt: parseThaiTime(order.completedAt),
+    };
+  }
+}
 
 export default Order;

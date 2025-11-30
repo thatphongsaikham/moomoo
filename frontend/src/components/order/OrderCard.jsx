@@ -1,90 +1,97 @@
 import React from "react";
-import { Clock, Users } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { useBilingual } from '../../hook/useBilingual';
 
 /**
- * OrderCard Component - Display order details with queue type badge
+ * OrderCard Component - Display order details
  * @param {Object} props
  * @param {Object} props.order - Order object
- * @param {Function} props.onComplete - Handler for completing order
+ * @param {Boolean} props.isFirst - Is this the first order in queue
  */
-export default function OrderCard({ order, onComplete }) {
+export default function OrderCard({ order, isFirst }) {
   const { isThai } = useBilingual();
 
   // Queue type styling
   const isNormalQueue = order.queueType === 'Normal';
-  const borderColor = isNormalQueue ? 'border-blue-400' : 'border-purple-400';
-  const badgeColor = isNormalQueue ? 'bg-blue-500' : 'bg-purple-500';
-  const dotColor = isNormalQueue ? 'bg-blue-500' : 'bg-purple-500';
+  const accentColor = isNormalQueue ? 'bg-blue-500' : 'bg-purple-500';
+  const borderHighlight = isFirst 
+    ? (isNormalQueue ? 'border-blue-500 bg-blue-950/30' : 'border-purple-500 bg-purple-950/30')
+    : 'border-gray-700 bg-gray-900/50';
 
-  // Format time
-  const orderTime = new Date(order.createdAt).toLocaleTimeString(
-    isThai ? 'th-TH' : 'en-US',
-    { hour: '2-digit', minute: '2-digit' }
-  );
+  // Format time - use Thailand timezone
+  const orderDate = new Date(order.createdAt);
+  const orderTime = orderDate.toLocaleTimeString('th-TH', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Bangkok'
+  });
+
+  // Calculate time elapsed - get current time in Thailand timezone
+  const nowInThailand = new Date().getTime();
+  const orderTimeMs = orderDate.getTime();
+  const minutesAgo = Math.max(0, Math.floor((nowInThailand - orderTimeMs) / 60000));
+  
+  const timeAgoText = minutesAgo < 1 
+    ? (isThai ? 'เมื่อกี้' : 'Just now')
+    : (isThai ? `${minutesAgo} นาทีก่อน` : `${minutesAgo}m ago`);
 
   return (
-    <div className={`group relative rounded-2xl p-6 shadow-lg border-2 ${borderColor} bg-white hover:shadow-xl transition-shadow`}>
-      {/* Queue Type Badge */}
-      <div className={`absolute -top-3 -right-3 ${badgeColor} px-4 py-2 rounded-full shadow-lg`}>
-        <div className="text-xs font-bold text-white">
-          {order.queueType} Queue
+    <div className={`rounded-xl p-5 border-2 ${borderHighlight} transition-all`}>
+      {/* Header: Table + Time */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          {isFirst && (
+            <span className={`${accentColor} text-white text-xs font-bold px-2 py-0.5 rounded-full`}>
+              #1
+            </span>
+          )}
+          <span className="text-base md:text-lg font-bold text-white">
+            🪑 {isThai ? 'โต๊ะ' : 'Table'} {order.tableNumber}
+          </span>
         </div>
-      </div>
-
-      {/* Table Number Badge */}
-      <div className="flex items-center gap-2 mb-4">
-        <Users className="w-5 h-5 text-gray-600" />
-        <span className="text-xl font-bold text-gray-800">
-          {isThai ? 'โต๊ะ' : 'Table'} {order.tableNumber}
-        </span>
+        <div className="flex items-center gap-1 text-gray-400 text-xs md:text-sm">
+          <Clock className="w-3.5 h-3.5" />
+          <span>{orderTime}</span>
+          <span className="text-gray-600">•</span>
+          <span className={minutesAgo > 10 ? 'text-red-400' : 'text-gray-400'}>
+            {timeAgoText}
+          </span>
+        </div>
       </div>
 
       {/* Order Items */}
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold text-gray-600 mb-2 uppercase">
-          {isThai ? 'รายการอาหาร' : 'Order Items'}
-        </h3>
-        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-          {order.items.map((item, index) => (
-            <div key={index} className="flex items-start gap-3">
-              <div className={`w-2 h-2 ${dotColor} rounded-full mt-2 flex-shrink-0`} />
-              <div className="flex-1">
-                <div className="font-medium text-gray-800">
-                  {isThai ? item.nameThai : item.nameEnglish}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {isThai ? 'จำนวน' : 'Qty'}: {item.quantity} × ฿{item.price}
-                </div>
-              </div>
+      <div className="space-y-3">
+        {order.items.map((item, index) => (
+          <div key={index} className="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className={`w-1.5 h-1.5 ${accentColor} rounded-full`}></span>
+              <span className="text-white font-medium text-sm">
+                {item.nameThai || item.nameEnglish}
+              </span>
             </div>
-          ))}
-        </div>
+            <div className="flex items-center gap-2">
+              <span className="text-white font-bold text-sm bg-gray-700 px-2 py-0.5 rounded">
+                ×{item.quantity}
+              </span>
+              {item.price > 0 && (
+                <span className="text-gray-400 text-xs">
+                  ฿{item.price}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Order Notes */}
       {order.notes && (
-        <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <div className="text-xs font-semibold text-yellow-800 mb-1">
-            {isThai ? 'หมายเหตุ' : 'Notes'}
+        <div className="mt-4 p-3 bg-yellow-900/30 rounded-lg border border-yellow-600/30">
+          <div className="text-sm text-yellow-400">
+            📝 {order.notes}
           </div>
-          <div className="text-sm text-yellow-900">{order.notes}</div>
         </div>
       )}
-
-      {/* Footer with Time and Complete Button */}
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Clock className="w-4 h-4" />
-          <span>{orderTime}</span>
-        </div>
-        <button
-          onClick={() => onComplete(order._id)}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md hover:shadow-lg"
-        >
-          {isThai ? 'เสร็จสิ้น' : 'Complete'}
-        </button>
-      </div>
     </div>
   );
 }
