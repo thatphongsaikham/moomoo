@@ -7,11 +7,11 @@ import MenuService from "../services/MenuService.js";
  * @access  Public
  * @query   available - If true, only return available items
  */
-export const getAllMenuItems = asyncHandler(async (req, res) => {
+export const getAll = asyncHandler(async (req, res) => {
   const { available } = req.query;
   const availableOnly = available === "true";
 
-  const menuItems = MenuService.getAllMenuItems(availableOnly);
+  const menuItems = MenuService.getAll(availableOnly);
 
   res.status(200).json({
     success: true,
@@ -25,12 +25,12 @@ export const getAllMenuItems = asyncHandler(async (req, res) => {
  * @access  Public
  * @param   category - 'Starter', 'Premium', or 'Special'
  */
-export const getMenuByCategory = asyncHandler(async (req, res) => {
+export const getByCategory = asyncHandler(async (req, res) => {
   const { category } = req.params;
   const { available } = req.query;
   const availableOnly = available === "true";
 
-  const menuItems = MenuService.getMenuByCategory(category, availableOnly);
+  const menuItems = MenuService.getByCategory(category, availableOnly);
 
   res.status(200).json({
     success: true,
@@ -44,10 +44,10 @@ export const getMenuByCategory = asyncHandler(async (req, res) => {
  * @desc    Get a specific menu item by category and ID
  * @access  Public
  */
-export const getMenuItemById = asyncHandler(async (req, res) => {
+export const getById = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = MenuService.getMenuItemById(category, parseInt(id));
+  const menuItem = MenuService.getById(category, parseInt(id));
 
   res.status(200).json({
     success: true,
@@ -61,10 +61,10 @@ export const getMenuItemById = asyncHandler(async (req, res) => {
  * @access  Private (admin only)
  * @body    { name, description, imageUrl, foodType, price (Special only), isAvailable }
  */
-export const createMenuItem = asyncHandler(async (req, res) => {
+export const create = asyncHandler(async (req, res) => {
   const { category } = req.params;
 
-  const menuItem = MenuService.createMenuItem(category, req.body);
+  const menuItem = MenuService.create(category, req.body);
 
   res.status(201).json({
     success: true,
@@ -78,10 +78,10 @@ export const createMenuItem = asyncHandler(async (req, res) => {
  * @desc    Update an existing menu item
  * @access  Private (admin only)
  */
-export const updateMenuItem = asyncHandler(async (req, res) => {
+export const update = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = MenuService.updateMenuItem(category, parseInt(id), req.body);
+  const menuItem = MenuService.update(category, parseInt(id), req.body);
 
   res.status(200).json({
     success: true,
@@ -123,10 +123,10 @@ export const toggleAvailability = asyncHandler(async (req, res) => {
  * @desc    Delete a menu item
  * @access  Private (admin only)
  */
-export const deleteMenuItem = asyncHandler(async (req, res) => {
+export const remove = asyncHandler(async (req, res) => {
   const { category, id } = req.params;
 
-  const menuItem = MenuService.deleteMenuItem(category, parseInt(id));
+  const menuItem = MenuService.delete(category, parseInt(id));
 
   res.status(200).json({
     success: true,

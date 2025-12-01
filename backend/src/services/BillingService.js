@@ -16,21 +16,16 @@ export const calculateVAT = (totalIncludingVAT) => {
 
 class BillingService {
   /**
-   * Create a new bill for a table
+   * Create - Create a new bill for a table
    * @param {number} tableNumber - Table number (1-10)
    * @param {number} customerCount - Number of customers (1-4)
    * @param {string} buffetTier - Buffet tier (Starter or Premium)
    * @param {number} buffetPricePerPerson - Price per person
    * @returns {Promise<Object>} Created bill
    */
-  async createBillForTable(
-    tableNumber,
-    customerCount,
-    buffetTier,
-    buffetPricePerPerson
-  ) {
+  async create(tableNumber, customerCount, buffetTier, buffetPricePerPerson) {
     // Check for existing active bill
-    const existingBill = Bill.findActiveByTable(tableNumber);
+    const existingBill = Bill.getActiveByTable(tableNumber);
 
     if (existingBill) {
       throw new Error(`Active bill already exists for table ${tableNumber}`);
@@ -63,23 +58,23 @@ class BillingService {
   }
 
   /**
-   * Get active bill for a table
+   * GetActiveByTable - Get active bill for a table
    * @param {number} tableNumber - Table number (1-10)
    * @returns {Promise<Object|null>} Active bill or null if not found
    */
-  async getActiveBillForTable(tableNumber) {
-    const bill = Bill.findActiveByTable(tableNumber);
+  async getActiveByTable(tableNumber) {
+    const bill = Bill.getActiveByTable(tableNumber);
     // Return null instead of throwing error - this is a valid state
     return bill;
   }
 
   /**
-   * Get bill by ID
+   * GetById - Get bill by ID
    * @param {string|number} billId - Bill ID
    * @returns {Promise<Object>} Bill
    */
-  async getBillById(billId) {
-    const bill = Bill.findById(billId);
+  async getById(billId) {
+    const bill = Bill.getById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -89,11 +84,11 @@ class BillingService {
   }
 
   /**
-   * Get historical bills with filters
+   * GetHistory - Get historical bills with filters
    * @param {Object} filters - Query filters
    * @returns {Promise<Object>} { data, pagination }
    */
-  async getHistoricalBills(filters = {}) {
+  async getHistory(filters = {}) {
     const { tableNumber, startDate, endDate, limit = 50, page = 1 } = filters;
 
     const queryFilters = { status: "Archived" };
@@ -104,7 +99,7 @@ class BillingService {
 
     const offset = (page - 1) * limit;
 
-    const bills = Bill.findAll({
+    const bills = Bill.getAll({
       ...queryFilters,
       limit,
       offset,
@@ -124,13 +119,13 @@ class BillingService {
   }
 
   /**
-   * Add special menu item to bill
+   * AddItem - Add special menu item to bill
    * @param {string|number} billId - Bill ID
    * @param {Object} item - Item details
    * @returns {Promise<Object>} Updated bill
    */
-  async addItemToBill(billId, item) {
-    const bill = Bill.findById(billId);
+  async addItem(billId, item) {
+    const bill = Bill.getById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -155,12 +150,12 @@ class BillingService {
   }
 
   /**
-   * Archive a bill (mark as paid and close)
+   * Archive - Archive a bill (mark as paid and close)
    * @param {string|number} billId - Bill ID
    * @returns {Promise<Object>} Archived bill
    */
-  async archiveBill(billId) {
-    const bill = Bill.findById(billId);
+  async archive(billId) {
+    const bill = Bill.getById(billId);
 
     if (!bill) {
       throw new Error("Bill not found");
@@ -175,12 +170,12 @@ class BillingService {
   }
 
   /**
-   * Get printable bill format
+   * GetPrintable - Get printable bill format
    * @param {number} tableNumber - Table number (1-10)
    * @returns {Promise<Object>} Printable bill data
    */
-  async getPrintableBill(tableNumber) {
-    const bill = await this.getActiveBillForTable(tableNumber);
+  async getPrintable(tableNumber) {
+    const bill = await this.getActiveByTable(tableNumber);
 
     if (!bill) {
       throw new Error("No active bill found for this table");

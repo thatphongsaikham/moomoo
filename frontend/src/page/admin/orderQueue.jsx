@@ -26,7 +26,7 @@ export default function OrderQueue() {
     const firstOrder = queue[0];
     try {
       setServingOrder(firstOrder._id);
-      await orderService.completeOrder(firstOrder._id);
+      await orderService.complete(firstOrder._id);
       
       // Show success message
       const tableNum = firstOrder.tableNumber;

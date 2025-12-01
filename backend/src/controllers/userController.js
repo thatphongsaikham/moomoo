@@ -1,15 +1,15 @@
 import User from "../models/User.js";
 
-export const getUsers = async (req, res) => {
+export const getAll = async (req, res) => {
   try {
-    const users = User.findAll();
+    const users = User.getAll();
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-export const createUser = async (req, res) => {
+export const create = async (req, res) => {
   try {
     const user = User.create(req.body);
     res.status(201).json(user);

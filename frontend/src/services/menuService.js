@@ -47,10 +47,10 @@ class MenuService {
   }
 
   /**
-   * Get all menu items grouped by category
+   * GetAll - Get all menu items grouped by category
    * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  async getAllMenuItems() {
+  async getAll() {
     try {
       const response = await this.api.get("/menu");
       return response.data;
@@ -61,11 +61,11 @@ class MenuService {
   }
 
   /**
-   * Get menu items by category
+   * GetByCategory - Get menu items by category
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @returns {Array} Menu items in the category
    */
-  async getMenuByCategory(category) {
+  async getByCategory(category) {
     try {
       const response = await this.api.get(`/menu/${category}`);
       return response.data;
@@ -76,12 +76,12 @@ class MenuService {
   }
 
   /**
-   * Get a specific menu item by category and ID
+   * GetById - Get a specific menu item by category and ID
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @param {Number} id - Menu item ID
    * @returns {Object} Menu item
    */
-  async getMenuItemById(category, id) {
+  async getById(category, id) {
     try {
       const response = await this.api.get(`/menu/${category}/${id}`);
       return response.data;
@@ -92,12 +92,12 @@ class MenuService {
   }
 
   /**
-   * Create a new menu item
+   * Create - Create a new menu item
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @param {Object} data - { name, description, foodType, imageUrl, price (Special only), isAvailable }
    * @returns {Object} Created menu item
    */
-  async createMenuItem(category, data) {
+  async create(category, data) {
     try {
       const response = await this.api.post(`/menu/${category}`, data);
       return response.data;
@@ -110,13 +110,13 @@ class MenuService {
   }
 
   /**
-   * Update a menu item
+   * Update - Update a menu item
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @param {Number} id - Menu item ID
    * @param {Object} data - Fields to update
    * @returns {Object} Updated menu item
    */
-  async updateMenuItem(category, id, data) {
+  async update(category, id, data) {
     try {
       const response = await this.api.put(`/menu/${category}/${id}`, data);
       return response.data;
@@ -129,13 +129,13 @@ class MenuService {
   }
 
   /**
-   * Toggle menu item availability
+   * SetAvailability - Toggle menu item availability
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @param {Number} id - Menu item ID
    * @param {Boolean} isAvailable - New availability status
    * @returns {Object} Updated menu item
    */
-  async toggleAvailability(category, id, isAvailable) {
+  async setAvailability(category, id, isAvailable) {
     try {
       const response = await this.api.patch(
         `/menu/${category}/${id}/availability`,
@@ -149,12 +149,12 @@ class MenuService {
   }
 
   /**
-   * Delete a menu item
+   * Delete - Delete a menu item
    * @param {String} category - 'Starter', 'Premium', or 'Special'
    * @param {Number} id - Menu item ID
    * @returns {Object} Deleted menu item
    */
-  async deleteMenuItem(category, id) {
+  async delete(category, id) {
     try {
       const response = await this.api.delete(`/menu/${category}/${id}`);
       return response.data;

@@ -6,10 +6,10 @@ import db from "../config/database.js";
  */
 class MenuItem {
   /**
-   * Find menu item by ID (category:id format or just id with category prefix)
+   * GetById - Get menu item by ID (category:id format or just id with category prefix)
    * ID format: "starter_1", "premium_2", "special_3"
    */
-  static findById(id) {
+  static getById(id) {
     if (!id) return null;
 
     // Parse the ID to determine category and actual ID
@@ -47,9 +47,9 @@ class MenuItem {
   }
 
   /**
-   * Find all menu items
+   * GetAll - Get all menu items
    */
-  static findAll() {
+  static getAll() {
     const items = [];
 
     // Get starter items
@@ -74,9 +74,9 @@ class MenuItem {
   }
 
   /**
-   * Find items by category
+   * GetByCategory - Get items by category
    */
-  static findByCategory(category) {
+  static getByCategory(category) {
     const tableName = this.getTableName(category);
     const prefix = this.getPrefix(category);
 
@@ -87,9 +87,9 @@ class MenuItem {
   }
 
   /**
-   * Find available items by category
+   * GetAvailableByCategory - Get available items by category
    */
-  static findAvailableByCategory(category) {
+  static getAvailableByCategory(category) {
     const tableName = this.getTableName(category);
     const prefix = this.getPrefix(category);
 
@@ -163,7 +163,7 @@ class MenuItem {
       `UPDATE ${tableName} SET isAvailable = ?, updatedAt = datetime('now') WHERE id = ?`
     ).run(isAvailable ? 1 : 0, actualId);
 
-    return this.findById(id);
+    return this.getById(id);
   }
 
   /**

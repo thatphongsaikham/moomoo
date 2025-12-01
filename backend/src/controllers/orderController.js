@@ -7,7 +7,7 @@ import OrderService from "../services/OrderService.js";
  * @access  Public (no auth required for customer orders)
  * @body    { tableNumber: Number, items: [{menuItem: String, quantity: Number}], notes: String }
  */
-export const createOrder = asyncHandler(async (req, res) => {
+export const create = asyncHandler(async (req, res) => {
   console.log("รับ request สั่งอาหาร:", req.body);
   const { tableNumber, items, notes } = req.body;
 
@@ -37,10 +37,10 @@ export const createOrder = asyncHandler(async (req, res) => {
   // Create order via service (synchronous - SQLite)
   let order;
   try {
-    order = OrderService.placeOrder(tableNumber, items, notes);
+    order = OrderService.create(tableNumber, items, notes);
     console.log("สร้างออเดอร์สำเร็จ:", order);
   } catch (err) {
-    console.error("เกิด error ใน OrderService.placeOrder:", err);
+    console.error("เกิด error ใน OrderService.create:", err);
     throw err;
   }
 
@@ -60,7 +60,7 @@ export const createOrder = asyncHandler(async (req, res) => {
  * @access  Private (admin only)
  * @param   queueType - 'Normal' or 'Special'
  */
-export const getQueueOrders = asyncHandler(async (req, res) => {
+export const getByQueue = asyncHandler(async (req, res) => {
   const { queueType } = req.params;
 
   if (!["Normal", "Special"].includes(queueType)) {
@@ -68,7 +68,7 @@ export const getQueueOrders = asyncHandler(async (req, res) => {
     throw new Error("Queue type must be Normal or Special");
   }
 
-  const orders = OrderService.getQueueOrders(queueType);
+  const orders = OrderService.getByQueue(queueType);
 
   res.status(200).json({
     success: true,
@@ -83,7 +83,7 @@ export const getQueueOrders = asyncHandler(async (req, res) => {
  * @access  Public (customers can view their table's orders)
  * @param   tableNumber - Table number (1-10)
  */
-export const getTableOrders = asyncHandler(async (req, res) => {
+export const getByTable = asyncHandler(async (req, res) => {
   const tableNumber = parseInt(req.params.tableNumber);
 
   if (isNaN(tableNumber) || tableNumber < 1 || tableNumber > 10) {
@@ -91,7 +91,7 @@ export const getTableOrders = asyncHandler(async (req, res) => {
     throw new Error("Invalid table number");
   }
 
-  const orders = OrderService.getTableOrders(tableNumber);
+  const orders = OrderService.getByTable(tableNumber);
 
   res.status(200).json({
     success: true,
@@ -106,10 +106,10 @@ export const getTableOrders = asyncHandler(async (req, res) => {
  * @access  Private (admin only)
  * @param   id - Order ID
  */
-export const completeOrder = asyncHandler(async (req, res) => {
+export const complete = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const order = OrderService.completeOrder(id);
+  const order = OrderService.complete(id);
 
   res.status(200).json({
     success: true,

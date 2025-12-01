@@ -2,12 +2,13 @@ import db from "../config/database.js";
 
 /**
  * Queue Model - Simple queue management for waiting customers
+ * Uses standard queue operations: enqueue, dequeue, peek, size, isEmpty, clear
  */
 class Queue {
   /**
-   * Add customer to queue
+   * Enqueue - Add customer to the back of the queue
    */
-  static create(data) {
+  static enqueue(data) {
     const { customerName, customerPhone = "", partySize } = data;
 
     const result = db
@@ -19,53 +20,14 @@ class Queue {
       )
       .run(customerName, customerPhone, partySize);
 
-    return this.findById(result.lastInsertRowid);
+    return this.getById(result.lastInsertRowid);
   }
 
   /**
-   * Find queue entry by ID
+   * Dequeue - Remove and return the front customer from the queue
    */
-  static findById(id) {
-    const queue = db.prepare("SELECT * FROM queue WHERE id = ?").get(id);
-    return this.toObject(queue);
-  }
-
-  /**
-   * Get all queue entries ordered by creation time (FIFO)
-   */
-  static findAll() {
-    const queues = db
-      .prepare("SELECT * FROM queue ORDER BY createdAt ASC")
-      .all();
-    return queues.map((q) => this.toObject(q));
-  }
-
-  /**
-   * Get the first (oldest) entry in the queue
-   */
-  static getFirst() {
-    const queue = db
-      .prepare("SELECT * FROM queue ORDER BY createdAt ASC LIMIT 1")
-      .get();
-    return this.toObject(queue);
-  }
-
-  /**
-   * Delete queue entry by ID (call next in queue)
-   */
-  static deleteById(id) {
-    const queue = this.findById(id);
-    if (!queue) return null;
-
-    db.prepare("DELETE FROM queue WHERE id = ?").run(id);
-    return queue;
-  }
-
-  /**
-   * Delete the first entry (call next customer)
-   */
-  static deleteFirst() {
-    const first = this.getFirst();
+  static dequeue() {
+    const first = this.peek();
     if (!first) return null;
 
     db.prepare("DELETE FROM queue WHERE id = ?").run(first.id);
@@ -73,18 +35,64 @@ class Queue {
   }
 
   /**
-   * Delete all queue entries
+   * Peek - View the front customer without removing
    */
-  static deleteAll() {
-    const result = db.prepare("DELETE FROM queue").run();
-    return result.changes;
+  static peek() {
+    const queue = db
+      .prepare("SELECT * FROM queue ORDER BY createdAt ASC LIMIT 1")
+      .get();
+    return this.toObject(queue);
   }
 
   /**
-   * Get queue count
+   * GetAll - Get all queue entries ordered by creation time (FIFO)
    */
-  static count() {
+  static getAll() {
+    const queues = db
+      .prepare("SELECT * FROM queue ORDER BY createdAt ASC")
+      .all();
+    return queues.map((q) => this.toObject(q));
+  }
+
+  /**
+   * GetById - Get queue entry by ID
+   */
+  static getById(id) {
+    const queue = db.prepare("SELECT * FROM queue WHERE id = ?").get(id);
+    return this.toObject(queue);
+  }
+
+  /**
+   * Remove - Remove a specific queue entry by ID
+   */
+  static remove(id) {
+    const queue = this.getById(id);
+    if (!queue) return null;
+
+    db.prepare("DELETE FROM queue WHERE id = ?").run(id);
+    return queue;
+  }
+
+  /**
+   * Size - Get the number of entries in the queue
+   */
+  static size() {
     return db.prepare("SELECT COUNT(*) as count FROM queue").get().count;
+  }
+
+  /**
+   * IsEmpty - Check if queue is empty
+   */
+  static isEmpty() {
+    return this.size() === 0;
+  }
+
+  /**
+   * Clear - Remove all entries from the queue
+   */
+  static clear() {
+    const result = db.prepare("DELETE FROM queue").run();
+    return result.changes;
   }
 
   /**

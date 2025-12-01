@@ -6,9 +6,9 @@ import TableService from "../services/TableService.js";
  * @desc Get all tables with optional status filter
  * @access Public
  */
-export const getAllTables = asyncHandler(async (req, res) => {
+export const getAll = asyncHandler(async (req, res) => {
   const { status } = req.query;
-  const tables = await TableService.getAllTables(status);
+  const tables = await TableService.getAll(status);
 
   res.json({
     success: true,
@@ -21,9 +21,9 @@ export const getAllTables = asyncHandler(async (req, res) => {
  * @desc Get specific table by number
  * @access Public
  */
-export const getTableByNumber = asyncHandler(async (req, res) => {
+export const getByNumber = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
-  const table = await TableService.getTableByNumber(parseInt(tableNumber));
+  const table = await TableService.getByNumber(parseInt(tableNumber));
 
   res.json({
     success: true,
@@ -36,7 +36,7 @@ export const getTableByNumber = asyncHandler(async (req, res) => {
  * @desc Open a table for dining
  * @access Admin
  */
-export const openTable = asyncHandler(async (req, res) => {
+export const open = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
   const { customerCount, buffetTier } = req.body;
 
@@ -46,7 +46,7 @@ export const openTable = asyncHandler(async (req, res) => {
     throw new Error("Customer count and buffet tier are required");
   }
 
-  const table = await TableService.openTable(
+  const table = await TableService.open(
     parseInt(tableNumber),
     customerCount,
     buffetTier
@@ -64,14 +64,11 @@ export const openTable = asyncHandler(async (req, res) => {
  * @desc Reserve a table for 15 minutes
  * @access Admin
  */
-export const reserveTable = asyncHandler(async (req, res) => {
+export const reserve = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
   const { notes } = req.body;
 
-  const table = await TableService.reserveTable(
-    parseInt(tableNumber),
-    notes || ""
-  );
+  const table = await TableService.reserve(parseInt(tableNumber), notes || "");
 
   res.json({
     success: true,
@@ -102,10 +99,10 @@ export const cancelReservation = asyncHandler(async (req, res) => {
  * @desc Close a table after payment and reset to Available
  * @access Admin
  */
-export const closeTable = asyncHandler(async (req, res) => {
+export const close = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
 
-  const result = await TableService.closeTable(parseInt(tableNumber));
+  const result = await TableService.close(parseInt(tableNumber));
 
   res.json({
     success: true,

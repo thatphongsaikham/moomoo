@@ -21,7 +21,7 @@ function Home() {
     const fetchMenu = async () => {
       try {
         setLoading(true);
-        const response = await menuService.getAllMenuItems();
+        const response = await menuService.getAll();
         console.log('Menu response:', response);
         // Backend returns { success: true, data: { starter: [], premium: [], special: [] } }
         const data = response?.data || response || { starter: [], premium: [], special: [] };

@@ -39,7 +39,7 @@ function CartPage() {
         }
 
         // Load menu items
-        const response = await menuService.getAllMenuItems();
+        const response = await menuService.getAll();
         setMenuItems(response.data || response);
       } catch (error) {
         console.error('Failed to load cart data:', error);
@@ -97,7 +97,7 @@ function CartPage() {
       }));
 
       // Submit order
-      const response = await orderService.placeOrder(tableNumber, items, notes);
+      const response = await orderService.create(tableNumber, items, notes);
       
       // Clear cart
       localStorage.removeItem('cart');

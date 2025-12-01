@@ -1,11 +1,11 @@
 import express from "express";
 import {
-  getAllTables,
-  getTableByNumber,
-  openTable,
-  reserveTable,
+  getAll,
+  getByNumber,
+  open,
+  reserve,
   cancelReservation,
-  closeTable,
+  close,
   verifyPIN,
 } from "../controllers/tableController.js";
 import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
@@ -13,14 +13,14 @@ import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Public routes (no auth required for demo)
-router.get("/", getAllTables);
-router.get("/:tableNumber", getTableByNumber);
+router.get("/", getAll);
+router.get("/:tableNumber", getByNumber);
 router.post("/:tableNumber/verify-pin", verifyPIN);
 
 // Admin routes (temporarily public for demo - TODO: add authentication)
-router.post("/:tableNumber/open", openTable);
-router.post("/:tableNumber/reserve", reserveTable);
+router.post("/:tableNumber/open", open);
+router.post("/:tableNumber/reserve", reserve);
 router.post("/:tableNumber/cancel-reservation", cancelReservation);
-router.post("/:tableNumber/close", closeTable);
+router.post("/:tableNumber/close", close);
 
 export default router;

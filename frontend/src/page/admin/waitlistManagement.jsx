@@ -32,7 +32,7 @@ function WaitlistManagement() {
   const loadQueue = async () => {
     try {
       setLoading(true);
-      const response = await queueService.getAllQueue();
+      const response = await queueService.getAll();
       setQueue(response.data || []);
       setError(null);
     } catch (err) {
@@ -45,7 +45,7 @@ function WaitlistManagement() {
 
   const loadOpenTablesCount = async () => {
     try {
-      const response = await tableService.getTables('Open');
+      const response = await tableService.getAll('Open');
       const tables = response.data || [];
       setOpenTablesCount(tables.length);
     } catch (err) {
@@ -53,7 +53,7 @@ function WaitlistManagement() {
     }
   };
 
-  const handleAddToQueue = async (e) => {
+  const handleEnqueue = async (e) => {
     e.preventDefault();
 
     if (!newCustomer.customerName || !newCustomer.partySize) {
@@ -68,7 +68,7 @@ function WaitlistManagement() {
     }
 
     try {
-      await queueService.addToQueue({
+      await queueService.enqueue({
         customerName: newCustomer.customerName,
         customerPhone: newCustomer.customerPhone || '',
         partySize: partySize,
@@ -81,7 +81,7 @@ function WaitlistManagement() {
     }
   };
 
-  const handleCallNext = async () => {
+  const handleDequeue = async () => {
     if (queue.length === 0) {
       alert('ไม่มีลูกค้าในคิว');
       return;
@@ -93,7 +93,7 @@ function WaitlistManagement() {
     }
 
     try {
-      await queueService.callNext();
+      await queueService.dequeue();
       loadQueue();
     } catch (err) {
       alert('ไม่สามารถเรียกคิวได้: ' + err.message);
@@ -142,7 +142,7 @@ function WaitlistManagement() {
       {/* Add to Queue Form */}
       <div className="bg-gray-800/40 p-4 md:p-6 rounded-xl border border-gray-700 mb-6 md:mb-8">
         <h2 className="text-lg md:text-xl font-bold mb-4">➕ เพิ่มคิวใหม่</h2>
-        <form onSubmit={handleAddToQueue} className="space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-4 md:items-end">
+        <form onSubmit={handleEnqueue} className="space-y-4 md:space-y-0 md:grid md:grid-cols-12 md:gap-4 md:items-end">
           <div className="md:col-span-4">
             <label className="block text-sm text-gray-300 mb-2">ชื่อลูกค้า *</label>
             <input
@@ -203,7 +203,7 @@ function WaitlistManagement() {
       {queue.length > 0 && (
         <div className="mb-6">
           <button
-            onClick={handleCallNext}
+            onClick={handleDequeue}
             className="w-full md:w-auto bg-green-600 hover:bg-green-700 px-6 md:px-8 py-4 md:py-3 rounded-xl font-bold text-base md:text-lg transition-colors flex items-center justify-center md:justify-start gap-3 shadow-lg shadow-green-600/30"
           >
             <Users className="w-6 h-6" />

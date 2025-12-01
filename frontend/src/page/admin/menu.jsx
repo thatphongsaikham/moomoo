@@ -136,7 +136,12 @@ function MenuForm({
 }
 
 export default function MenuPage() {
-  const [menuData, setMenuData] = useState({ starter: [], premium: [], special: [] });
+  const [menuData, setMenuData] = useState({
+    starter: [],
+    premium: [],
+    special: []
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -162,7 +167,7 @@ export default function MenuPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await menuService.getAllMenuItems();
+      const response = await menuService.getAll();
       setMenuData(response.data || { starter: [], premium: [], special: [] });
     } catch (err) {
       console.error("Failed to fetch menu:", err);
@@ -194,7 +199,7 @@ export default function MenuPage() {
 
     setIsSaving(true);
     try {
-      await menuService.createMenuItem(activeCategory, {
+      await menuService.create(activeCategory, {
         name: formData.name,
         description: formData.description || "",
         foodType: formData.foodType || "",
@@ -236,7 +241,7 @@ export default function MenuPage() {
     if (!confirm("ต้องการลบเมนูนี้หรือไม่?")) return;
 
     try {
-      await menuService.deleteMenuItem(activeCategory, itemId);
+      await menuService.delete(activeCategory, itemId);
       await fetchMenuItems();
     } catch (err) {
       console.error("Failed to delete menu item:", err);
@@ -247,7 +252,7 @@ export default function MenuPage() {
   const handleToggleAvailability = async (itemId, currentAvailability) => {
     const newAvailability = !currentAvailability;
     try {
-      await menuService.toggleAvailability(activeCategory, itemId, newAvailability);
+      await menuService.setAvailability(activeCategory, itemId, newAvailability);
       await fetchMenuItems();
     } catch (err) {
       console.error("Failed to toggle availability:", err);

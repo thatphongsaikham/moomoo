@@ -27,7 +27,7 @@ function BillingManagement() {
    */
   const fetchOpenTables = async () => {
     try {
-      const response = await tableService.getTables('Open');
+      const response = await tableService.getAll('Open');
       setTables(response.data);
     } catch (error) {
       console.error('Failed to fetch tables:', error);
@@ -40,7 +40,7 @@ function BillingManagement() {
   const fetchHistoricalBills = async () => {
     setLoading(true);
     try {
-      const response = await billService.getHistoricalBills({});
+      const response = await billService.getHistory({});
       console.log('Historical bills API response:', response);
       console.log('First bill sample:', response.data[0]);
       // response.data is already the array of bills - sort by archivedAt descending (newest first)
@@ -97,7 +97,7 @@ function BillingManagement() {
   const handleViewBill = async (tableNumber) => {
     setLoading(true);
     try {
-      const response = await billService.getActiveBillForTable(tableNumber);
+      const response = await billService.getActiveByTable(tableNumber);
       
       // Check if bill exists
       if (!response.data) {
@@ -122,7 +122,7 @@ function BillingManagement() {
 
     setLoading(true);
     try {
-      const response = await billService.getPrintableBill(selectedBill.tableNumber);
+      const response = await billService.getPrintable(selectedBill.tableNumber);
       setPrintData(response.data);
       setShowPrintDialog(true);
       
@@ -370,7 +370,7 @@ function BillingManagement() {
                         <button
                           onClick={async () => {
                             try {
-                              const response = await billService.getBillById(bill._id);
+                              const response = await billService.getById(bill._id);
                               setSelectedBill(response.data);
                               setShowBillDialog(true);
                             } catch (error) {
@@ -470,7 +470,7 @@ function BillingManagement() {
                             <button
                               onClick={async () => {
                                 try {
-                                  const response = await billService.getBillById(bill._id);
+                                  const response = await billService.getById(bill._id);
                                   setSelectedBill(response.data);
                                   setShowBillDialog(true);
                                 } catch (error) {

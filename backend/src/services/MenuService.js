@@ -12,9 +12,9 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Object} { starter: [], premium: [], special: [] }
    */
-  getAllMenuItems(availableOnly = false) {
+  getAll(availableOnly = false) {
     // Return menu items grouped by category
-    const allItems = MenuItem.findAll();
+    const allItems = MenuItem.getAll();
 
     const grouped = {
       starter: [],
@@ -54,7 +54,7 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Array} Menu items in category
    */
-  getMenuByCategory(category, availableOnly = false) {
+  getByCategory(category, availableOnly = false) {
     // Map short category names to full names
     const categoryMap = {
       Starter: "Starter Buffet",
@@ -65,9 +65,9 @@ class MenuService {
     const fullCategory = categoryMap[category] || category;
 
     if (availableOnly) {
-      return MenuItem.findAvailableByCategory(fullCategory);
+      return MenuItem.getAvailableByCategory(fullCategory);
     }
-    return MenuItem.findByCategory(fullCategory);
+    return MenuItem.getByCategory(fullCategory);
   }
 
   /**
@@ -76,12 +76,12 @@ class MenuService {
    * @param {Number} id - Menu item ID
    * @returns {Object} Menu item
    */
-  getMenuItemById(category, id) {
+  getById(category, id) {
     // Build the composite ID
     const prefix = category.toLowerCase();
     const compositeId = `${prefix}_${id}`;
 
-    const menuItem = MenuItem.findById(compositeId);
+    const menuItem = MenuItem.getById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -94,7 +94,7 @@ class MenuService {
    * @param {Object} data - Menu item data
    * @returns {Object} Created menu item
    */
-  createMenuItem(category, data) {
+  create(category, data) {
     const { name, description, imageUrl, foodType, price, isAvailable } = data;
 
     // Validate required fields
@@ -159,21 +159,21 @@ class MenuService {
         );
     }
 
-    return MenuItem.findById(`${prefix}_${result.lastInsertRowid}`);
+    return MenuItem.getById(`${prefix}_${result.lastInsertRowid}`);
   }
 
   /**
-   * Update an existing menu item
+   * Update - Update an existing menu item
    * @param {String} category - Category name
    * @param {Number} id - Menu item ID
    * @param {Object} updates - Fields to update
    * @returns {Object} Updated menu item
    */
-  updateMenuItem(category, id, updates) {
+  update(category, id, updates) {
     const prefix = category.toLowerCase();
     const compositeId = `${prefix}_${id}`;
 
-    const menuItem = MenuItem.findById(compositeId);
+    const menuItem = MenuItem.getById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -227,11 +227,11 @@ class MenuService {
       ).run(...values);
     }
 
-    return MenuItem.findById(compositeId);
+    return MenuItem.getById(compositeId);
   }
 
   /**
-   * Toggle menu item availability
+   * ToggleAvailability - Toggle menu item availability
    * @param {String} category - Category name
    * @param {Number} id - Menu item ID
    * @param {Boolean} isAvailable - New availability status
@@ -241,7 +241,7 @@ class MenuService {
     const prefix = category.toLowerCase();
     const compositeId = `${prefix}_${id}`;
 
-    const menuItem = MenuItem.findById(compositeId);
+    const menuItem = MenuItem.getById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -249,16 +249,16 @@ class MenuService {
   }
 
   /**
-   * Delete a menu item
+   * Delete - Delete a menu item
    * @param {String} category - Category name
    * @param {Number} id - Menu item ID
    * @returns {Object} Deleted menu item
    */
-  deleteMenuItem(category, id) {
+  delete(category, id) {
     const prefix = category.toLowerCase();
     const compositeId = `${prefix}_${id}`;
 
-    const menuItem = MenuItem.findById(compositeId);
+    const menuItem = MenuItem.getById(compositeId);
     if (!menuItem) {
       throw new Error("Menu item not found");
     }
@@ -281,8 +281,8 @@ class MenuService {
    * @param {Boolean} availableOnly - Only return available items
    * @returns {Array} All menu items
    */
-  getAllItemsFlat(availableOnly = false) {
-    return MenuItem.findAll();
+  getAllFlat(availableOnly = false) {
+    return MenuItem.getAll();
   }
 }
 

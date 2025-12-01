@@ -205,7 +205,7 @@ function ActiveTablesView() {
 
     try {
       // Get all open tables from server
-      const response = await tableService.getTables('Open');
+      const response = await tableService.getAll('Open');
       const openTables = response.data || [];
 
       const linkedList = tablesLinkedListRef.current;

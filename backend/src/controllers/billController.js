@@ -6,11 +6,9 @@ import BillingService from "../services/BillingService.js";
  * @desc Get active bill for a table
  * @access Public
  */
-export const getActiveBillForTable = asyncHandler(async (req, res) => {
+export const getActiveByTable = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
-  const bill = await BillingService.getActiveBillForTable(
-    parseInt(tableNumber)
-  );
+  const bill = await BillingService.getActiveByTable(parseInt(tableNumber));
 
   res.json({
     success: true,
@@ -23,9 +21,9 @@ export const getActiveBillForTable = asyncHandler(async (req, res) => {
  * @desc Get bill by ID
  * @access Public
  */
-export const getBillById = asyncHandler(async (req, res) => {
+export const getById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const bill = await BillingService.getBillById(id);
+  const bill = await BillingService.getById(id);
 
   res.json({
     success: true,
@@ -38,7 +36,7 @@ export const getBillById = asyncHandler(async (req, res) => {
  * @desc Get historical bills with filters
  * @access Admin
  */
-export const getHistoricalBills = asyncHandler(async (req, res) => {
+export const getHistory = asyncHandler(async (req, res) => {
   const filters = {
     tableNumber: req.query.tableNumber,
     startDate: req.query.startDate,
@@ -47,7 +45,7 @@ export const getHistoricalBills = asyncHandler(async (req, res) => {
     page: parseInt(req.query.page) || 1,
   };
 
-  const result = await BillingService.getHistoricalBills(filters);
+  const result = await BillingService.getHistory(filters);
 
   res.json({
     success: true,
@@ -61,7 +59,7 @@ export const getHistoricalBills = asyncHandler(async (req, res) => {
  * @desc Create bill for a table
  * @access Internal (called by TableService)
  */
-export const createBillForTable = asyncHandler(async (req, res) => {
+export const create = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
   const { customerCount, buffetTier, buffetPricePerPerson } = req.body;
 
@@ -71,7 +69,7 @@ export const createBillForTable = asyncHandler(async (req, res) => {
     throw new Error("Customer count, buffet tier, and price are required");
   }
 
-  const bill = await BillingService.createBillForTable(
+  const bill = await BillingService.create(
     parseInt(tableNumber),
     customerCount,
     buffetTier,
@@ -90,7 +88,7 @@ export const createBillForTable = asyncHandler(async (req, res) => {
  * @desc Add special menu item to bill
  * @access Internal (called by OrderService)
  */
-export const addItemToBill = asyncHandler(async (req, res) => {
+export const addItem = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { menuItem, nameThai, nameEnglish, price, quantity } = req.body;
 
@@ -100,7 +98,7 @@ export const addItemToBill = asyncHandler(async (req, res) => {
     throw new Error("All item fields are required");
   }
 
-  const bill = await BillingService.addItemToBill(id, {
+  const bill = await BillingService.addItem(id, {
     menuItem,
     nameThai,
     nameEnglish,
@@ -120,10 +118,10 @@ export const addItemToBill = asyncHandler(async (req, res) => {
  * @desc Archive bill (mark as paid)
  * @access Admin
  */
-export const archiveBill = asyncHandler(async (req, res) => {
+export const archive = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const bill = await BillingService.archiveBill(id);
+  const bill = await BillingService.archive(id);
 
   res.json({
     success: true,
@@ -144,9 +142,9 @@ export const archiveBill = asyncHandler(async (req, res) => {
  * @desc Get printable bill format
  * @access Public
  */
-export const getPrintableBill = asyncHandler(async (req, res) => {
+export const getPrintable = asyncHandler(async (req, res) => {
   const { tableNumber } = req.params;
-  const printableBill = await BillingService.getPrintableBill(
+  const printableBill = await BillingService.getPrintable(
     parseInt(tableNumber)
   );
 

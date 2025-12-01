@@ -56,13 +56,13 @@ class Order {
       }
     }
 
-    return this.findById(orderId);
+    return this.getById(orderId);
   }
 
   /**
-   * Find order by ID
+   * GetById - Get order by ID
    */
-  static findById(id) {
+  static getById(id) {
     const order = db.prepare("SELECT * FROM orders WHERE id = ?").get(id);
     if (!order) return null;
 
@@ -73,9 +73,9 @@ class Order {
   }
 
   /**
-   * Find orders by queue type and status
+   * GetByQueue - Get orders by queue type and status
    */
-  static findByQueue(queueType, status = null) {
+  static getByQueue(queueType, status = null) {
     let query = "SELECT * FROM orders WHERE queueType = ?";
     const params = [queueType];
 
@@ -96,9 +96,9 @@ class Order {
   }
 
   /**
-   * Find orders by table number
+   * GetByTable - Get orders by table number
    */
-  static findByTable(tableNumber, status = null) {
+  static getByTable(tableNumber, status = null) {
     let query = "SELECT * FROM orders WHERE tableNumber = ?";
     const params = [tableNumber];
 
@@ -119,9 +119,9 @@ class Order {
   }
 
   /**
-   * Find completed orders for billing (Special queue only)
+   * GetCompletedForBilling - Get completed orders for billing (Special queue only)
    */
-  static findCompletedForBilling(tableNumber) {
+  static getCompletedForBilling(tableNumber) {
     const orders = db
       .prepare(
         `
@@ -155,11 +155,11 @@ class Order {
     `
     ).run(thaiTime, orderId);
 
-    return this.findById(orderId);
+    return this.getById(orderId);
   }
 
   /**
-   * Update order status
+   * UpdateStatus - Update order status
    */
   static updateStatus(orderId, status) {
     if (status === "Completed") {
@@ -182,13 +182,13 @@ class Order {
       ).run(status, orderId);
     }
 
-    return this.findById(orderId);
+    return this.getById(orderId);
   }
 
   /**
-   * Get all pending orders
+   * GetAllPendingl pending orders
    */
-  static findAllPending() {
+  static getAllPending() {
     const orders = db
       .prepare(
         `

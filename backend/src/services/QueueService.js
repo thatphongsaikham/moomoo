@@ -2,14 +2,15 @@ import Queue from "../models/Queue.js";
 
 /**
  * QueueService - Manage customer waiting queue
+ * Uses standard queue operations: enqueue, dequeue, peek, size, clear
  */
 class QueueService {
   /**
-   * Add a customer to the queue
+   * Enqueue - Add a customer to the back of the queue
    * @param {Object} data - { customerName, customerPhone, partySize }
    * @returns {Object} Created queue entry
    */
-  async addToQueue(data) {
+  async enqueue(data) {
     const { customerName, customerPhone, partySize } = data;
 
     if (!customerName || !partySize) {
@@ -20,7 +21,7 @@ class QueueService {
       throw new Error("Party size must be between 1 and 4");
     }
 
-    return Queue.create({
+    return Queue.enqueue({
       customerName,
       customerPhone: customerPhone || "",
       partySize,
@@ -28,64 +29,72 @@ class QueueService {
   }
 
   /**
-   * Get all queue entries (ordered by createdAt, oldest first)
-   * @returns {Array} Queue entries
-   */
-  async getAllQueue() {
-    return Queue.findAll();
-  }
-
-  /**
-   * Get the next customer in queue (first/oldest)
-   * @returns {Object} Queue entry
-   */
-  async getNextInQueue() {
-    return Queue.getFirst();
-  }
-
-  /**
-   * Call the next customer (removes from queue)
+   * Dequeue - Remove and return the front customer from the queue
    * @returns {Object} Removed queue entry
    */
-  async callNext() {
-    const next = Queue.getFirst();
+  async dequeue() {
+    const next = Queue.peek();
 
     if (!next) {
       throw new Error("Queue is empty");
     }
 
-    return Queue.deleteFirst();
+    return Queue.dequeue();
   }
 
   /**
-   * Remove a specific queue entry by ID
+   * Peek - View the front customer without removing
+   * @returns {Object} Front queue entry
+   */
+  async peek() {
+    return Queue.peek();
+  }
+
+  /**
+   * GetAll - Get all queue entries (ordered by createdAt, oldest first)
+   * @returns {Array} Queue entries
+   */
+  async getAll() {
+    return Queue.getAll();
+  }
+
+  /**
+   * Remove - Remove a specific queue entry by ID
    * @param {Number} id - Queue entry ID
    * @returns {Object} Removed queue entry
    */
-  async removeFromQueue(id) {
-    const queue = Queue.findById(id);
+  async remove(id) {
+    const queue = Queue.getById(id);
 
     if (!queue) {
       throw new Error("Queue entry not found");
     }
 
-    return Queue.deleteById(id);
+    return Queue.remove(id);
   }
 
   /**
-   * Get queue count
-   * @returns {Number} Number of customers in queue
+   * Size - Get the number of customers in queue
+   * @returns {Number} Queue size
    */
-  async getQueueCount() {
-    return Queue.count();
+  async size() {
+    return Queue.size();
   }
 
   /**
-   * Clear all queue entries
+   * isEmpty - Check if queue is empty
+   * @returns {Boolean} True if queue is empty
+   */
+  async isEmpty() {
+    return Queue.isEmpty();
+  }
+
+  /**
+   * Clear - Remove all entries from the queue
    * @returns {Number} Number of entries cleared
    */
-  async clearQueue() {
-    return Queue.deleteAll();
+  async clear() {
+    return Queue.clear();
   }
 }
 

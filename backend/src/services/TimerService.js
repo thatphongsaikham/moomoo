@@ -24,7 +24,7 @@ class TimerService {
    * Check dining timers and warn when approaching 90 minutes
    */
   async checkDiningTimers() {
-    const openTables = Table.findByStatus("Open");
+    const openTables = Table.getByStatus("Open");
 
     for (const table of openTables) {
       if (!table.openedAt) continue;
@@ -65,7 +65,7 @@ class TimerService {
    * Check reservation timers and auto-release expired reservations
    */
   async checkReservationTimers() {
-    const reservedTables = Table.findByStatus("Reserved");
+    const reservedTables = Table.getByStatus("Reserved");
 
     for (const table of reservedTables) {
       if (!table.reservationExpiresAt) continue;
@@ -113,7 +113,7 @@ class TimerService {
    * @returns {Promise<Array>} Array of table timer statuses
    */
   async getTimerStatuses() {
-    const tables = Table.findAll();
+    const tables = Table.getAll();
 
     return tables.map((table) => {
       const status = {

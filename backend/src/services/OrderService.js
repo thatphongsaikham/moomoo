@@ -10,15 +10,15 @@ import Bill from "../models/Bill.js";
  */
 class OrderService {
   /**
-   * Place a new order and assign to appropriate queue
+   * Create - Place a new order and assign to appropriate queue
    * @param {Number} tableNumber - Table number (1-10)
    * @param {Array} items - Array of {menuItem: String, quantity: Number}
    * @param {String} notes - Optional order notes
    * @returns {Object} Created order
    */
-  placeOrder(tableNumber, items, notes = "") {
+  create(tableNumber, items, notes = "") {
     // Validate table exists and is open
-    const table = Table.findByNumber(tableNumber);
+    const table = Table.getByNumber(tableNumber);
     if (!table) {
       throw new Error(`Table ${tableNumber} not found`);
     }
@@ -31,7 +31,7 @@ class OrderService {
     const specialItems = [];
 
     for (const item of items) {
-      const menuItem = MenuItem.findById(item.menuItem);
+      const menuItem = MenuItem.getById(item.menuItem);
       if (!menuItem) {
         throw new Error(`Menu item ${item.menuItem} not found`);
       }
@@ -98,46 +98,46 @@ class OrderService {
   }
 
   /**
-   * Get all pending orders for a specific queue
+   * GetByQueue - Get all pending orders for a specific queue
    * @param {String} queueType - 'Normal' or 'Special'
    * @returns {Array} Orders sorted by FIFO (createdAt ascending)
    */
-  getQueueOrders(queueType) {
-    return Order.findByQueue(queueType, "Pending");
+  getByQueue(queueType) {
+    return Order.getByQueue(queueType, "Pending");
   }
 
   /**
-   * Get all pending orders in Normal queue
+   * GetNormalQueue - Get all pending orders in Normal queue
    * @returns {Array} Orders sorted by FIFO
    */
   getNormalQueue() {
-    return this.getQueueOrders("Normal");
+    return this.getByQueue("Normal");
   }
 
   /**
-   * Get all pending orders in Special queue
+   * GetSpecialQueue - Get all pending orders in Special queue
    * @returns {Array} Orders sorted by FIFO
    */
   getSpecialQueue() {
-    return this.getQueueOrders("Special");
+    return this.getByQueue("Special");
   }
 
   /**
-   * Get all orders for a specific table
+   * GetByTable - Get all orders for a specific table
    * @param {Number} tableNumber - Table number
    * @returns {Array} Orders for the table
    */
-  getTableOrders(tableNumber) {
-    return Order.findByTable(tableNumber);
+  getByTable(tableNumber) {
+    return Order.getByTable(tableNumber);
   }
 
   /**
-   * Mark an order as completed
+   * Complete - Mark an order as completed
    * @param {String|Number} orderId - Order ID
    * @returns {Object} Updated order
    */
-  completeOrder(orderId) {
-    const order = Order.findById(orderId);
+  complete(orderId) {
+    const order = Order.getById(orderId);
 
     if (!order) {
       throw new Error("Order not found");
@@ -151,12 +151,12 @@ class OrderService {
   }
 
   /**
-   * Get all completed orders for a table (for billing)
+   * GetCompletedForBilling - Get all completed orders for a table (for billing)
    * @param {Number} tableNumber - Table number
    * @returns {Array} Completed orders with special items only
    */
-  getCompletedOrdersForBilling(tableNumber) {
-    return Order.findCompletedForBilling(tableNumber);
+  getCompletedForBilling(tableNumber) {
+    return Order.getCompletedForBilling(tableNumber);
   }
 }
 

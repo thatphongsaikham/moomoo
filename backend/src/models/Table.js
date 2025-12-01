@@ -5,9 +5,9 @@ import db from "../config/database.js";
  */
 class Table {
   /**
-   * Find all tables with optional status filter
+   * GetAll - Get all tables with optional status filter
    */
-  static findAll(status = null) {
+  static getAll(status = null) {
     let query = "SELECT * FROM tables";
     const params = [];
 
@@ -23,9 +23,9 @@ class Table {
   }
 
   /**
-   * Find table by tableNumber
+   * GetByNumber - Get table by tableNumber
    */
-  static findByNumber(tableNumber) {
+  static getByNumber(tableNumber) {
     const table = db
       .prepare("SELECT * FROM tables WHERE tableNumber = ?")
       .get(tableNumber);
@@ -33,17 +33,17 @@ class Table {
   }
 
   /**
-   * Find table by ID
+   * GetById - Get table by ID
    */
-  static findById(id) {
+  static getById(id) {
     const table = db.prepare("SELECT * FROM tables WHERE id = ?").get(id);
     return this.toObject(table);
   }
 
   /**
-   * Find tables by status
+   * GetByStatus - Get tables by status
    */
-  static findByStatus(status) {
+  static getByStatus(status) {
     const tables = db
       .prepare("SELECT * FROM tables WHERE status = ? ORDER BY tableNumber ASC")
       .all(status);
@@ -51,14 +51,14 @@ class Table {
   }
 
   /**
-   * Find one table matching query
+   * GetOne - Get one table matching query
    */
-  static findOne(query) {
+  static getOne(query) {
     if (query.tableNumber) {
-      return this.findByNumber(query.tableNumber);
+      return this.getByNumber(query.tableNumber);
     }
     if (query.status) {
-      const tables = this.findByStatus(query.status);
+      const tables = this.getByStatus(query.status);
       return tables[0] || null;
     }
     return null;
@@ -110,14 +110,14 @@ class Table {
     )} WHERE tableNumber = ?`;
     db.prepare(query).run(...values);
 
-    return this.findByNumber(tableNumber);
+    return this.getByNumber(tableNumber);
   }
 
   /**
-   * Update by ID
+   * UpdateById - Update by ID
    */
   static updateById(id, data) {
-    const table = this.findById(id);
+    const table = this.getById(id);
     if (!table) return null;
     return this.update(table.tableNumber, data);
   }

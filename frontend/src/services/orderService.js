@@ -5,13 +5,13 @@ import api from "./api";
  */
 class OrderService {
   /**
-   * Place a new order
+   * Create - Place a new order
    * @param {Number} tableNumber - Table number (1-10)
    * @param {Array} items - Array of {menuItem: String (ID), quantity: Number}
    * @param {String} notes - Optional order notes
    * @returns {Promise} Order response
    */
-  async placeOrder(tableNumber, items, notes = "") {
+  async create(tableNumber, items, notes = "") {
     try {
       const response = await api.post("/orders", {
         tableNumber,
@@ -29,11 +29,11 @@ class OrderService {
   }
 
   /**
-   * Get orders for a specific table
+   * GetByTable - Get orders for a specific table
    * @param {Number} tableNumber - Table number
    * @returns {Promise} Array of orders
    */
-  async getTableOrders(tableNumber) {
+  async getByTable(tableNumber) {
     try {
       const response = await api.get(`/orders/table/${tableNumber}`);
       return response.data;
@@ -44,20 +44,20 @@ class OrderService {
   }
 
   /**
-   * Get orders for a specific table (alias for getTableOrders)
+   * GetOrdersByTable - Get orders for a specific table (alias for getByTable)
    * @param {Number} tableNumber - Table number
    * @returns {Promise} API response with orders array
    */
   async getOrdersByTable(tableNumber) {
-    return this.getTableOrders(tableNumber);
+    return this.getByTable(tableNumber);
   }
 
   /**
-   * Get orders for a specific queue (admin only)
+   * GetByQueue - Get orders for a specific queue (admin only)
    * @param {String} queueType - 'Normal' or 'Special'
    * @returns {Promise} Array of orders
    */
-  async getQueueOrders(queueType) {
+  async getByQueue(queueType) {
     try {
       const response = await api.get(`/orders/queue/${queueType}`);
       return response.data;
@@ -68,27 +68,27 @@ class OrderService {
   }
 
   /**
-   * Get Normal queue orders (admin only)
+   * GetNormalQueue - Get Normal queue orders (admin only)
    * @returns {Promise} Array of orders
    */
   async getNormalQueue() {
-    return this.getQueueOrders("Normal");
+    return this.getByQueue("Normal");
   }
 
   /**
-   * Get Special queue orders (admin only)
+   * GetSpecialQueue - Get Special queue orders (admin only)
    * @returns {Promise} Array of orders
    */
   async getSpecialQueue() {
-    return this.getQueueOrders("Special");
+    return this.getByQueue("Special");
   }
 
   /**
-   * Mark an order as completed (admin only)
+   * Complete - Mark an order as completed (admin only)
    * @param {String} orderId - Order ID
    * @returns {Promise} Updated order
    */
-  async completeOrder(orderId) {
+  async complete(orderId) {
     try {
       const response = await api.patch(`/orders/${orderId}/complete`);
       return response.data;

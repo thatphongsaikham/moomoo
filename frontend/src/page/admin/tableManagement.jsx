@@ -35,7 +35,7 @@ function TableManagement() {
    */
   const fetchAllTables = async () => {
     try {
-      const response = await tableService.getTables(null);
+      const response = await tableService.getAll(null);
       setAllTables(response.data);
     } catch (error) {
       console.error('Failed to fetch all tables:', error);
@@ -47,7 +47,7 @@ function TableManagement() {
    */
   const fetchTables = async () => {
     try {
-      const response = await tableService.getTables(statusFilter);
+      const response = await tableService.getAll(statusFilter);
       setTables(response.data);
     } catch (error) {
       console.error('Failed to fetch tables:', error);
@@ -84,7 +84,7 @@ function TableManagement() {
     setLoading(true);
 
     try {
-      const response = await tableService.openTable(
+      const response = await tableService.open(
         selectedTable,
         parseInt(openForm.customerCount),
         openForm.buffetTier
@@ -163,7 +163,7 @@ function TableManagement() {
 
     setLoading(true);
     try {
-      await tableService.closeTable(tableNumber);
+      await tableService.close(tableNumber);
       alert(`โต๊ะ ${tableNumber} ชำระเงินเรียบร้อย! โต๊ะพร้อมรับลูกค้าใหม่`);
       fetchAllTables();
       fetchTables();

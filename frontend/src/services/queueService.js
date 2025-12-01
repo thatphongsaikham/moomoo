@@ -38,9 +38,9 @@ class QueueService {
   }
 
   /**
-   * Get all queue entries (ordered by createdAt, oldest first)
+   * GetAll - Get all queue entries (ordered by createdAt, oldest first)
    */
-  async getAllQueue() {
+  async getAll() {
     try {
       const response = await this.api.get("/queue");
       return response.data;
@@ -51,15 +51,15 @@ class QueueService {
   }
 
   /**
-   * Add a customer to the queue
+   * Enqueue - Add a customer to the queue
    * @param {Object} data - { customerName, customerPhone?, partySize }
    */
-  async addToQueue(data) {
+  async enqueue(data) {
     try {
       const response = await this.api.post("/queue", data);
       return response.data;
     } catch (error) {
-      console.error("Failed to add to queue:", error);
+      console.error("Failed to enqueue:", error);
       throw new Error(
         error.response?.data?.message || "Failed to add to queue"
       );
@@ -67,14 +67,14 @@ class QueueService {
   }
 
   /**
-   * Call the next customer (removes first from queue)
+   * Dequeue - Call the next customer (removes first from queue)
    */
-  async callNext() {
+  async dequeue() {
     try {
       const response = await this.api.post("/queue/call-next");
       return response.data;
     } catch (error) {
-      console.error("Failed to call next:", error);
+      console.error("Failed to dequeue:", error);
       throw new Error(
         error.response?.data?.message || "Failed to call next customer"
       );
@@ -82,10 +82,25 @@ class QueueService {
   }
 
   /**
-   * Remove a specific customer from queue
+   * Peek - View the next customer without removing
+   */
+  async peek() {
+    try {
+      const response = await this.api.get("/queue/next");
+      return response.data;
+    } catch (error) {
+      console.error("Failed to peek:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to get next customer"
+      );
+    }
+  }
+
+  /**
+   * Remove - Remove a specific customer from queue by ID
    * @param {Number} id - Queue entry ID
    */
-  async removeFromQueue(id) {
+  async remove(id) {
     try {
       const response = await this.api.delete(`/queue/${id}`);
       return response.data;
@@ -98,16 +113,16 @@ class QueueService {
   }
 
   /**
-   * Get queue count
+   * Size - Get the number of customers in queue
    */
-  async getQueueCount() {
+  async size() {
     try {
       const response = await this.api.get("/queue/count");
       return response.data;
     } catch (error) {
-      console.error("Failed to get queue count:", error);
+      console.error("Failed to get queue size:", error);
       throw new Error(
-        error.response?.data?.message || "Failed to get queue count"
+        error.response?.data?.message || "Failed to get queue size"
       );
     }
   }

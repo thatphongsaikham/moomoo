@@ -17,6 +17,14 @@ const MenuPage = () => {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessError, setAccessError] = useState(null); // เก็บข้อความ error ถ้าเข้าไม่ได้
+  
+  // สำหรับแสดงเวลาที่เหลือ
+  const [tableOpenedAt, setTableOpenedAt] = useState(null);
+  const [diningTimeRemaining, setDiningTimeRemaining] = useState(null);
+  const [realtimeRemaining, setRealtimeRemaining] = useState(null);
+  
+  // สำหรับ dialog เรียกพนักงาน
+  const [showCallStaffDialog, setShowCallStaffDialog] = useState(false);
 
   // ดึงข้อมูลโต๊ะและเมนูจาก backend
   useEffect(() => {
@@ -33,7 +41,7 @@ const MenuPage = () => {
         }
 
         // ดึงข้อมูลโต๊ะเพื่อตรวจสอบสถานะและ session
-        const tableRes = await tableService.getTableByNumber(tableNumber);
+        const tableRes = await tableService.getByNumber(tableNumber);
         const table = tableRes.data || tableRes;
         console.log('Table info:', table);
 
@@ -57,9 +65,13 @@ const MenuPage = () => {
         }
 
         setBuffetTier(table.buffetTier);
+        
+        // เก็บข้อมูลเวลาสำหรับ countdown
+        setTableOpenedAt(table.openedAt);
+        setDiningTimeRemaining(table.diningTimeRemaining || 5400000); // default 90 นาที
 
         // ดึงเมนูทั้งหมด
-        const menuRes = await menuService.getAllMenuItems();
+        const menuRes = await menuService.getAll();
         const data = menuRes.data || menuRes;
         
         if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -111,6 +123,33 @@ const MenuPage = () => {
     fetchData();
   }, [tableNumber, encryptedId]);
 
+  // Countdown timer - คำนวณเวลาที่เหลือแบบ realtime
+  useEffect(() => {
+    if (!tableOpenedAt || !diningTimeRemaining) return;
+
+    const calculateRemaining = () => {
+      const openedTime = new Date(tableOpenedAt).getTime();
+      const now = Date.now();
+      const elapsed = now - openedTime;
+      const remaining = diningTimeRemaining - elapsed;
+      setRealtimeRemaining(Math.max(0, remaining));
+    };
+
+    calculateRemaining();
+    const interval = setInterval(calculateRemaining, 1000);
+    return () => clearInterval(interval);
+  }, [tableOpenedAt, diningTimeRemaining]);
+
+  // แปลง milliseconds เป็น HH:MM:SS
+  const formatTime = (ms) => {
+    if (ms === null || ms === undefined) return '--:--:--';
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   // เพิ่มเมนูเข้าตะกร้า
   const addToCart = (item) => {
     setCart((prev) => {
@@ -154,7 +193,7 @@ const MenuPage = () => {
         menuItem: it._id,
         quantity: it.qty || 1,
       }));
-      const response = await orderService.placeOrder(tableNumber, items, "");
+      const response = await orderService.create(tableNumber, items, "");
       console.log('ผลลัพธ์จาก backend เมื่อสั่งอาหาร:', response);
       
       // นับจำนวนเมนูแต่ละประเภท
@@ -234,10 +273,152 @@ const MenuPage = () => {
 
   const tierLabel = buffetTier === "Premium" ? "Premium Buffet (299฿)" : "Starter Buffet (259฿)";
 
+  // คำนวณสีเวลาตามเวลาที่เหลือ
+  const getTimeColor = () => {
+    if (realtimeRemaining === null) return '#888';
+    if (realtimeRemaining <= 0) return '#dc2626'; // หมดเวลา - แดง
+    if (realtimeRemaining <= 600000) return '#dc2626'; // น้อยกว่า 10 นาที - แดง
+    if (realtimeRemaining <= 1800000) return '#eab308'; // น้อยกว่า 30 นาที - เหลือง
+    return '#16a34a'; // ปกติ - เขียว
+  };
+
   return (
     <div style={{ padding: "20px", background: "#18181b", minHeight: "100vh" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: 8, color: '#dc2626', textShadow: '0 2px 8px #0008' }}>เมนูอาหาร</h1>
-      <p style={{ color: '#888', marginBottom: 16 }}>โต๊ะ {tableNumber} • {tierLabel}</p>
+      {/* Header with Time and Call Staff Button */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: 16,
+        flexWrap: 'wrap',
+        gap: 12
+      }}>
+        <div>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: "bold", marginBottom: 4, color: '#dc2626', textShadow: '0 2px 8px #0008' }}>เมนูอาหาร</h1>
+          <p style={{ color: '#888', margin: 0 }}>โต๊ะ {tableNumber} • {tierLabel}</p>
+        </div>
+        
+        {/* ปุ่มเรียกพนักงาน */}
+        <button
+          onClick={() => setShowCallStaffDialog(true)}
+          style={{
+            padding: '12px 20px',
+            background: '#eab308',
+            color: '#000',
+            borderRadius: 12,
+            fontWeight: 'bold',
+            fontSize: 16,
+            cursor: 'pointer',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 2px 8px #eab30866'
+          }}
+        >
+          🔔 เรียกพนักงาน
+        </button>
+      </div>
+
+      {/* แสดงเวลาที่เหลือ */}
+      <div style={{
+        background: '#232323',
+        borderRadius: 12,
+        padding: '16px 20px',
+        marginBottom: 24,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        border: realtimeRemaining !== null && realtimeRemaining <= 600000 ? '2px solid #dc2626' : '1px solid #333'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 24 }}>⏱️</span>
+          <div>
+            <div style={{ color: '#888', fontSize: 12 }}>เวลาที่เหลือ</div>
+            <div style={{ 
+              color: getTimeColor(), 
+              fontSize: '1.5rem', 
+              fontWeight: 'bold',
+              fontFamily: 'monospace'
+            }}>
+              {formatTime(realtimeRemaining)}
+            </div>
+          </div>
+        </div>
+        {realtimeRemaining !== null && realtimeRemaining <= 0 && (
+          <div style={{ 
+            background: '#dc2626', 
+            color: '#fff', 
+            padding: '6px 12px', 
+            borderRadius: 8,
+            fontWeight: 'bold',
+            fontSize: 14
+          }}>
+            หมดเวลา!
+          </div>
+        )}
+        {realtimeRemaining !== null && realtimeRemaining > 0 && realtimeRemaining <= 600000 && (
+          <div style={{ 
+            background: '#dc2626', 
+            color: '#fff', 
+            padding: '6px 12px', 
+            borderRadius: 8,
+            fontWeight: 'bold',
+            fontSize: 14,
+            animation: 'pulse 1s infinite'
+          }}>
+            ใกล้หมดเวลา!
+          </div>
+        )}
+      </div>
+
+      {/* Dialog เรียกพนักงาน */}
+      {showCallStaffDialog && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#232323',
+            borderRadius: 16,
+            padding: 32,
+            maxWidth: 400,
+            width: '90%',
+            textAlign: 'center',
+            border: '1px solid #333'
+          }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>🔔</div>
+            <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: 12 }}>เรียกพนักงาน</h2>
+            <p style={{ color: '#888', marginBottom: 24 }}>
+              พนักงานจะมาที่โต๊ะของคุณในไม่ช้า<br/>
+              กรุณารอสักครู่
+            </p>
+            <button
+              onClick={() => setShowCallStaffDialog(false)}
+              style={{
+                padding: '12px 32px',
+                background: '#dc2626',
+                color: '#fff',
+                borderRadius: 8,
+                fontWeight: 'bold',
+                fontSize: 16,
+                cursor: 'pointer',
+                border: 'none'
+              }}
+            >
+              ตกลง
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* เมนูบุฟเฟ่ต์ (ฟรี) */}
       <section style={{ marginTop: 24 }}>

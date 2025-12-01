@@ -25,8 +25,8 @@ class TableService {
    * @param {string} buffetTier - Buffet tier (Starter or Premium)
    * @returns {Promise<Object>} Updated table with bill reference
    */
-  async openTable(tableNumber, customerCount, buffetTier) {
-    const table = Table.findByNumber(tableNumber);
+  async open(tableNumber, customerCount, buffetTier) {
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -93,8 +93,8 @@ class TableService {
    * @param {string} notes - Optional reservation notes
    * @returns {Promise<Object>} Updated table with reservation timestamps
    */
-  async reserveTable(tableNumber, notes = "") {
-    const table = Table.findByNumber(tableNumber);
+  async reserve(tableNumber, notes = "") {
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -126,7 +126,7 @@ class TableService {
    * @returns {Promise<Object>} Updated table (Available status)
    */
   async cancelReservation(tableNumber) {
-    const table = Table.findByNumber(tableNumber);
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -155,8 +155,8 @@ class TableService {
    * @param {number} tableNumber - Table number (1-10)
    * @returns {Promise<Object>} Updated table and archived bill info
    */
-  async closeTable(tableNumber) {
-    const table = Table.findByNumber(tableNumber);
+  async close(tableNumber) {
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -219,8 +219,8 @@ class TableService {
    * @param {string} status - Optional status filter
    * @returns {Promise<Array>} Array of tables with calculated fields
    */
-  async getAllTables(status = null) {
-    const tables = Table.findAll(status);
+  async getAll(status = null) {
+    const tables = Table.getAll(status);
 
     // Add calculated fields
     return tables.map((table) => {
@@ -251,8 +251,8 @@ class TableService {
    * @param {number} tableNumber - Table number (1-10)
    * @returns {Promise<Object>} Table with calculated fields
    */
-  async getTableByNumber(tableNumber) {
-    const table = Table.findByNumber(tableNumber);
+  async getByNumber(tableNumber) {
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -286,7 +286,7 @@ class TableService {
    * @returns {Promise<Object>} Updated table
    */
   async setCurrentBill(tableNumber, billId) {
-    const table = Table.findByNumber(tableNumber);
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");
@@ -302,7 +302,7 @@ class TableService {
    * @returns {Promise<Object>} Verification result with encryptedId if valid
    */
   async verifyPIN(tableNumber, pin) {
-    const table = Table.findByNumber(tableNumber);
+    const table = Table.getByNumber(tableNumber);
 
     if (!table) {
       throw new Error("Table not found");

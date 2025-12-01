@@ -5,7 +5,7 @@ import db from "../config/database.js";
  */
 class User {
   /**
-   * Create a new user
+   * Create - Create a new user
    */
   static create(data) {
     const { name, email } = data;
@@ -18,35 +18,35 @@ class User {
       )
       .run(name, email);
 
-    return this.findById(result.lastInsertRowid);
+    return this.getById(result.lastInsertRowid);
   }
 
   /**
-   * Find user by ID
+   * GetById - Get user by ID
    */
-  static findById(id) {
+  static getById(id) {
     const user = db.prepare("SELECT * FROM users WHERE id = ?").get(id);
     return this.toObject(user);
   }
 
   /**
-   * Find user by email
+   * GetByEmail - Get user by email
    */
-  static findByEmail(email) {
+  static getByEmail(email) {
     const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
     return this.toObject(user);
   }
 
   /**
-   * Find all users
+   * GetAll - Get all users
    */
-  static findAll() {
+  static getAll() {
     const users = db.prepare("SELECT * FROM users").all();
     return users.map((user) => this.toObject(user));
   }
 
   /**
-   * Update user by ID
+   * UpdateById - Update user by ID
    */
   static updateById(id, data) {
     const fields = [];
@@ -61,21 +61,21 @@ class User {
       }
     }
 
-    if (fields.length === 0) return this.findById(id);
+    if (fields.length === 0) return this.getById(id);
 
     values.push(id);
     db.prepare(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`).run(
       ...values
     );
 
-    return this.findById(id);
+    return this.getById(id);
   }
 
   /**
-   * Delete user by ID
+   * DeleteById - Delete user by ID
    */
   static deleteById(id) {
-    const user = this.findById(id);
+    const user = this.getById(id);
     if (!user) return null;
 
     db.prepare("DELETE FROM users WHERE id = ?").run(id);

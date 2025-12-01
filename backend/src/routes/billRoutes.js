@@ -1,28 +1,28 @@
 import express from "express";
 import {
-  getActiveBillForTable,
-  getBillById,
-  getHistoricalBills,
-  createBillForTable,
-  addItemToBill,
-  archiveBill,
-  getPrintableBill,
+  getActiveByTable,
+  getById,
+  getHistory,
+  create,
+  addItem,
+  archive,
+  getPrintable,
 } from "../controllers/billController.js";
 import { authMiddleware, adminOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Public/Admin routes
-router.get("/table/:tableNumber", getActiveBillForTable);
-router.get("/table/:tableNumber/print", getPrintableBill);
-router.get("/history", getHistoricalBills);
-router.get("/:id", getBillById);
+router.get("/table/:tableNumber", getActiveByTable);
+router.get("/table/:tableNumber/print", getPrintable);
+router.get("/history", getHistory);
+router.get("/:id", getById);
 
 // Internal routes (called by system)
-router.post("/table/:tableNumber", createBillForTable);
-router.patch("/:id/add-item", addItemToBill);
+router.post("/table/:tableNumber", create);
+router.patch("/:id/add-item", addItem);
 
 // Admin routes
-router.patch("/:id/archive", archiveBill);
+router.patch("/:id/archive", archive);
 
 export default router;

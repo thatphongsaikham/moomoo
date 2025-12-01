@@ -42,13 +42,13 @@ class Bill {
         status
       );
 
-    return this.findById(result.lastInsertRowid);
+    return this.getById(result.lastInsertRowid);
   }
 
   /**
-   * Find bill by ID
+   * GetById - Get bill by ID
    */
-  static findById(id) {
+  static getById(id) {
     const bill = db.prepare("SELECT * FROM bills WHERE id = ?").get(id);
     if (!bill) return null;
 
@@ -61,9 +61,9 @@ class Bill {
   }
 
   /**
-   * Find active bill for a table
+   * GetActiveByTable - Get active bill for a table
    */
-  static findActiveByTable(tableNumber) {
+  static getActiveByTable(tableNumber) {
     const bill = db
       .prepare(
         "SELECT * FROM bills WHERE tableNumber = ? AND status = 'Active'"
@@ -79,21 +79,21 @@ class Bill {
   }
 
   /**
-   * Find one bill matching query
+   * GetOne - Get one bill matching query
    */
-  static findOne(query) {
+  static getOne(query) {
     if (query.tableNumber && query.status) {
       if (query.status === "Active") {
-        return this.findActiveByTable(query.tableNumber);
+        return this.getActiveByTable(query.tableNumber);
       }
     }
     return null;
   }
 
   /**
-   * Find all bills with optional filters
+   * GetAll - Get all bills with optional filters
    */
-  static findAll(filters = {}) {
+  static getAll(filters = {}) {
     let query = "SELECT * FROM bills WHERE 1=1";
     const params = [];
 
@@ -130,7 +130,7 @@ class Bill {
   }
 
   /**
-   * Count bills with optional filters
+   * Count - Count bills with optional filters
    */
   static count(filters = {}) {
     let query = "SELECT COUNT(*) as count FROM bills WHERE 1=1";
@@ -192,11 +192,11 @@ class Bill {
     `
     ).run(specialItemsTotal, total, preVatSubtotal, vatAmount, billId);
 
-    return this.findById(billId);
+    return this.getById(billId);
   }
 
   /**
-   * Archive a bill
+   * Archive - Archive a bill
    */
   static archive(billId) {
     db.prepare(
@@ -206,11 +206,11 @@ class Bill {
     `
     ).run(billId);
 
-    return this.findById(billId);
+    return this.getById(billId);
   }
 
   /**
-   * Update bill by ID
+   * UpdateById - Update bill by ID
    */
   static updateById(id, data) {
     const fields = [];
@@ -229,14 +229,14 @@ class Bill {
       }
     }
 
-    if (fields.length === 0) return this.findById(id);
+    if (fields.length === 0) return this.getById(id);
 
     values.push(id);
     db.prepare(`UPDATE bills SET ${fields.join(", ")} WHERE id = ?`).run(
       ...values
     );
 
-    return this.findById(id);
+    return this.getById(id);
   }
 
   /**
